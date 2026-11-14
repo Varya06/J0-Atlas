@@ -231,22 +231,30 @@ function actualizarTodo() {
   let colorOrden = '#4ade80';
   let explicacion = '';
 
+  //Para que aparezca la señal de advertencia 
+  // Mostrar u ocultar la alerta de peligro según la orden actual
+    const alertaAborto = document.getElementById('alertaAborto');
+
   if (recursos < 30 || (comms < 25 && distMinimaSeguro > 3.5)) {
     orden = 'REGRESAR A BASE (ABORTO)';
+    alertaAborto.classList.add('activa');
     colorOrden = '#ef4444';
     explicacion = `Recursos críticos (${recursos}%) o pérdida de enlace (${comms}%). Retorno inmediato a Origen (${distRegreso.toFixed(2)} km).`;
     lineaDesvioSeguro = L.polyline([posActual, puntos[0]], { color: '#ef4444', weight: 4, dashArray: '6, 6' }).addTo(map);
   } else if (polvo >= 65 && distMinimaSeguro < distRestante && recursos >= 35) {
     orden = `ESPERAR EN PUNTO DE APOYO (${puntoMasCercano.id})`;
+    alertaAborto.classList.remove('activa');
     colorOrden = '#38bdf8';
     explicacion = `Tormenta local predicha (${polvo}%). Refugiarse en <b>${puntoMasCercano.nombre}</b> a ${distMinimaSeguro.toFixed(2)} km.`;
     lineaDesvioSeguro = L.polyline([posActual, puntoMasCercano.coords], { color: '#38bdf8', weight: 4, dashArray: '5, 5' }).addTo(map);
   } else if (terreno >= 60 || (polvo >= 45 && polvo < 65)) {
     orden = 'CAMBIAR DE TRAMO (DESVÍO)';
+    alertaAborto.classList.remove('activa');
     colorOrden = '#facc15';
     explicacion = `Riesgo en tramo (Terreno: ${terreno}%, Polvo: ${polvo}%). Desviar ruta bordeando obstáculo.`;
   } else {
     orden = 'CONTINUAR RUTA PREVISTA';
+    alertaAborto.classList.remove('activa');
     colorOrden = '#4ade80';
     explicacion = `Sensores nominales. Quedan ${distRestante.toFixed(2)} km hasta destino con margen seguro.`;
   }

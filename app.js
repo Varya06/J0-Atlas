@@ -19,73 +19,95 @@ const map = L.map('map', {
 }).setView(CENTRO_JEZERO, 10.5);
 
 // =========================================================================
-// 2. CONEXIÓN EN VIVO CON NASA MARS TREK WMTS (MOSAICO MRO CTX JEZERO)
+// 2. CONEXIÓN EN VIVO CON NASA MARS TREK WMTS (CAPAS CIENTÍFICAS)
 // =========================================================================
-const urlNASA =
-  'https://trek.nasa.gov/tiles/Mars/EQ/' +
-  'JEZ_ctx_B_soc_008_orthoMosaic_6m_Eqc_latTs0_lon0/' +
-  '1.0.0//default/default028mm/{z}/{y}/{x}.png';
+const urlsCapasWMTS = {
+  optico:
+    'https://trek.nasa.gov/tiles/Mars/EQ/' +
+    'JEZ_ctx_B_soc_008_orthoMosaic_6m_Eqc_latTs0_lon0/' +
+    '1.0.0//default/default028mm/{z}/{y}/{x}.png',
+  // Si copias las URLs WMTS de MOLA / THEMIS / USGS desde Mars Trek (F12 -> Network), pégalas aquí:
+  topografico: '',
+  termico: '',
+  geologico: ''
+};
 
-const capaBaseNASA = L.tileLayer(urlNASA, {
-  minZoom: 0,
-  maxNativeZoom: 13,
-  maxZoom: 18,
-  tileSize: 256,
-  noWrap: true,
-  bounds: limitesNASA,
-  keepBuffer: 3,
-  updateWhenIdle: true,
-  attribution: 'NASA Mars Trek | MRO CTX Jezero Mosaic'
-}).addTo(map);
+function crearCapaWMTS(url) {
+  return L.tileLayer(url, {
+    minZoom: 0,
+    maxNativeZoom: 13,
+    maxZoom: 18,
+    tileSize: 256,
+    noWrap: true,
+    bounds: limitesNASA,
+    keepBuffer: 3,
+    updateWhenIdle: true,
+    attribution: 'NASA Mars Trek | MRO CTX Jezero Mosaic'
+  });
+}
+
+let capaBaseNASA = crearCapaWMTS(urlsCapasWMTS.optico).addTo(map);
 
 map.whenReady(() => {
   requestAnimationFrame(() => map.invalidateSize());
 });
 
-// Selector de capas científicas sobre la base georreferenciada de la NASA
+// Selector de capas: usa teselas WMTS reales si has pegado la URL, o modo espectral visual como respaldo
 document.getElementById('capaSelect').addEventListener('change', (e) => {
+  const tipo = e.target.value;
   const mapDiv = document.getElementById('map');
   mapDiv.classList.remove('filtro-topografico', 'filtro-termico', 'filtro-geologico');
 
-  if (e.target.value === 'topografico') mapDiv.classList.add('filtro-topografico');
-  if (e.target.value === 'termico') mapDiv.classList.add('filtro-termico');
-  if (e.target.value === 'geologico') mapDiv.classList.add('filtro-geologico');
+  if (urlsCapasWMTS[tipo] && urlsCapasWMTS[tipo].startsWith('http')) {
+    map.removeLayer(capaBaseNASA);
+    capaBaseNASA = crearCapaWMTS(urlsCapasWMTS[tipo]).addTo(map);
+  } else {
+    if (!capaBaseNASA._url.includes('JEZ_ctx')) {
+      map.removeLayer(capaBaseNASA);
+      capaBaseNASA = crearCapaWMTS(urlsCapasWMTS.optico).addTo(map);
+    }
+    if (tipo === 'topografico') mapDiv.classList.add('filtro-topografico');
+    if (tipo === 'termico') mapDiv.classList.add('filtro-termico');
+    if (tipo === 'geologico') mapDiv.classList.add('filtro-geologico');
+  }
 });
-
 // =========================================================================
-// 3. CÍRCULO DE ZONA BASE (ELIPSE PERSEVERANCE) Y LOS 6 PUNTOS SEGUROS
+// 3. CÍRCULO ZONA BASE COMPAGINADO Y LOS 6 PUNTOS SEGUROS CALIBRADOS
 // =========================================================================
 
-// Círculo cian de la elipse de aterrizaje alrededor de la Base Perseverance (S4)
+// Radio ampliado a 8800 para que el perímetro cian toque el borde del delta igual que en Mars Trek
 const circuloZonaBase = L.circle([18.4447, 77.4508], {
-  radius: 3850, // ~7.7 km de diámetro real en Marte
+  radius: 8800,
   color: '#67e8f9',
   weight: 2.5,
   fillColor: '#67e8f9',
   fillOpacity: 0.08
 })
   .addTo(map)
-  .bindPopup('<div style="color:#111;"><b>Perímetro Base Jezero (Elipse Perseverance)</b><br><small>Zona segura de operaciones principales (Radio: 3.85 km)</small></div>');
+  .bindPopup(
+    '<div style="color:#111;"><b>Perímetro Base Jezero (Elipse Perseverance)</b><br>' +
+    '<small>Zona segura de operaciones principales (Radio real: ~4.6 km)</small></div>'
+  );
 
-// Coordenadas recalibradas exactamente sobre los puntos de Mars Trek
+// Coordenadas ajustadas al píxel sobre el cauce, la boca del cañón, el delta y las colinas
 const puntosSegurosNaranja = [
   {
     id: 'S1',
     nombre: 'Meandro Neretva Vallis',
-    coords: [18.5455, 77.2535],
-    recursos: 'Repetidor UHF en cañón + Refugio térmico'
+    coords: [18.5345, 77.2830],
+    recursos: 'Repetidor UHF en curva del cañón + Refugio térmico'
   },
   {
     id: 'S2',
     nombre: 'Garganta Entrada Delta',
-    coords: [18.4815, 77.3245],
-    recursos: 'Depósito O2 auxiliar + Baliza paso estrecho'
+    coords: [18.4865, 77.3265],
+    recursos: 'Depósito O2 auxiliar + Baliza boca del río'
   },
   {
     id: 'S3',
     nombre: 'Terraza Delta Occidental',
-    coords: [18.4905, 77.3725],
-    recursos: 'Estación meteo local MEDA + Baterías'
+    coords: [18.4885, 77.3625],
+    recursos: 'Estación meteo local MEDA + Baterías (oeste del cráter)'
   },
   {
     id: 'S4',
@@ -96,19 +118,20 @@ const puntosSegurosNaranja = [
   {
     id: 'S5',
     nombre: 'Colinas Norte Jezero',
-    coords: [18.5960, 77.4980],
-    recursos: 'Repetidor largo alcance en altura + Refugio'
+    coords: [18.5565, 77.4930],
+    recursos: 'Repetidor largo alcance en borde norte + Refugio'
   },
   {
     id: 'S6',
     nombre: 'Llanura Cuenca Sureste',
-    coords: [18.4125, 77.6120],
+    coords: [18.4165, 77.5830],
     recursos: 'Depósito suministros + Baliza oriental'
   }
 ];
+const marcadoresPuntosSeguros = {};
 
 puntosSegurosNaranja.forEach((p) => {
-  L.circleMarker(p.coords, {
+  const marcador = L.circleMarker(p.coords, {
     radius: 7,
     color: '#ffffff',
     weight: 2,
@@ -117,16 +140,54 @@ puntosSegurosNaranja.forEach((p) => {
   })
     .addTo(map)
     .bindPopup(`
-      <div style="color:#111;">
+      <div style="color:#111; max-width:240px;">
         <b>Punto Seguro [${p.id}]: ${p.nombre}</b><br>
         <small>${p.recursos}</small><br>
         <small style="color:#555;">Lat: ${p.coords[0].toFixed(4)}° | Lon: ${p.coords[1].toFixed(4)}°</small>
       </div>
     `);
+
+  marcadoresPuntosSeguros[p.id] = marcador;
 });
 
 // =========================================================================
-// 4. CÁLCULO DE DISTANCIA EN MARTE Y PROBABILIDAD DE ÉXITO POR TRANSPORTE
+// 4. SEGUNDA CONEXIÓN API NASA: FOTOS POV REALES DE PERSEVERANCE EN JEZERO
+// =========================================================================
+async function cargarFotosPOVPerseverance() {
+  const urlFotosNASA =
+    'https://api.nasa.gov/mars-photos/api/v1/rovers/perseverance/latest_photos?api_key=DEMO_KEY';
+
+  try {
+    const resp = await fetch(urlFotosNASA);
+    if (!resp.ok) return;
+    const data = await resp.json();
+
+    if (data.latest_photos && data.latest_photos.length > 0) {
+      const foto = data.latest_photos[0];
+      const pBase = puntosSegurosNaranja.find((p) => p.id === 'S4');
+
+      marcadoresPuntosSeguros['S4'].setPopupContent(`
+        <div style="color:#111; max-width:250px;">
+          <b>Punto Seguro [S4]: ${pBase.nombre}</b><br>
+          <small>${pBase.recursos}</small><br>
+          <div style="margin-top:6px; background:#f1f5f9; padding:5px; border-radius:4px;">
+            <small><b>Vista POV Superficie (NASA API - Sol ${foto.sol}):</b></small><br>
+            <img src="${foto.img_src}" alt="Superficie Jezero" style="width:100%; border-radius:4px; margin-top:4px;">
+            <small style="color:#475569;">Cámara: ${foto.camera.full_name}</small>
+          </div>
+        </div>
+      `);
+      console.log('Foto POV real cargada desde NASA Perseverance API (Sol ' + foto.sol + ')');
+    }
+  } catch (err) {
+    console.warn('No se pudo cargar foto POV en vivo (límite DEMO_KEY o sin red):', err);
+  }
+}
+
+cargarFotosPOVPerseverance();
+
+// =========================================================================
+// 5. CÁLCULO DE DISTANCIA EN MARTE Y PROBABILIDAD DE ÉXITO POR TRANSPORTE
 // =========================================================================
 function distanciaMarteKm(p1, p2) {
   const rad = (g) => g * Math.PI / 180;
@@ -147,7 +208,7 @@ const modosTransporte = {
 function calcularRiesgoTerrenoRuta(p1, p2) {
   let penalizacion = 0.05;
   const medio = { lat: (p1.lat + p2.lat) / 2, lng: (p1.lng + p2.lng) / 2 };
-  const distCauce = distanciaMarteKm(medio, { lat: 18.5455, lng: 77.2535 });
+  const distCauce = distanciaMarteKm(medio, { lat: 18.5320, lng: 77.2550 });
   if (distCauce < 4.5) penalizacion += 0.25;
   return Math.min(penalizacion, 0.75);
 }
@@ -170,7 +231,7 @@ function colorPorProbabilidad(pct) {
 }
 
 // =========================================================================
-// 5. SELECCIÓN DE PUNTOS EN EL MAPA Y DECISIÓN TÁCTICA SIN SATÉLITE
+// 6. SELECCIÓN DE PUNTOS EN EL MAPA Y DECISIÓN TÁCTICA SIN SATÉLITE
 // =========================================================================
 let puntos = [];
 let marcadores = [];
@@ -308,7 +369,7 @@ map.on('click', (e) => {
 });
 
 // =========================================================================
-// 6. EVENTOS DE CONTROLES, LIMPIEZA Y MODO HUD
+// 7. EVENTOS DE CONTROLES, LIMPIEZA Y MODO HUD
 // =========================================================================
 document.getElementById('vehiculoSelect').addEventListener('change', actualizarTodo);
 document.getElementById('climaSelect').addEventListener('change', actualizarTodo);

@@ -1,329 +1,175 @@
 <!DOCTYPE html>
 <html lang="es">
-
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MarsWalk SafeNav - NASA Space Apps Valencia</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, sans-serif;
+      display: flex;
+      height: 100vh;
+      background: #0b0d17;
+      color: #ffffff;
+      overflow: hidden;
+    }
+    #sidebar {
+      width: 360px;
+      min-width: 360px;
+      padding: 16px;
+      background: #141829;
+      border-right: 1px solid #2a3152;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      z-index: 1000;
+      overflow-y: auto;
+    }
+    h2 { margin: 0; font-size: 1.3rem; color: #ff9e64; }
+    .subtitulo { margin: -6px 0 2px 0; font-size: 0.78rem; color: #7aa2f7; }
+    #map-container { flex: 1; min-width: 0; height: 100%; position: relative; }
+    #map { width: 100%; height: 100%; background: #1a110d; }
+    label { font-size: 0.8rem; color: #9aa5ce; display: block; margin-bottom: 3px; }
+    select, button {
+      width: 100%;
+      padding: 8px;
+      border-radius: 6px;
+      border: 1px solid #3b4261;
+      background: #1f2335;
+      color: #ffffff;
+      font-size: 0.86rem;
+    }
+    button { background: #e05a2b; border: none; font-weight: bold; cursor: pointer; }
+    button:hover { background: #c94b1f; }
+    .btn-hud { background: #0284c7; }
+    .btn-hud:hover { background: #0369a1; }
+    .panel {
+      background: #1f2335;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid #2e3552;
+      font-size: 0.84rem;
+      line-height: 1.45;
+    }
+    input[type="range"] { width: 100%; margin: 2px 0 6px 0; accent-color: #ff9e64; }
 
-    <title>MarsWalk SafeNav - NASA Space Apps Valencia</title>
+    /* Filtros científicos sobre las teselas NASA cuando no hay imagen local */
+    .filtro-topografico .leaflet-tile-pane { filter: sepia(100%) hue-rotate(190deg) saturate(260%) contrast(115%); }
+    .filtro-termico .leaflet-tile-pane { filter: sepia(100%) hue-rotate(-35deg) saturate(380%) contrast(125%); }
+    .filtro-geologico .leaflet-tile-pane { filter: sepia(100%) hue-rotate(65deg) saturate(240%) contrast(115%); }
 
-    <!-- Leaflet -->
-    <link
-        rel="stylesheet"
-        href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-    >
-
-    <style>
-        * {
-            box-sizing: border-box;
-        }
-
-        body {
-            margin: 0;
-            font-family: system-ui, -apple-system, sans-serif;
-            display: flex;
-            height: 100vh;
-            background: #0b0d17;
-            color: #ffffff;
-            overflow: hidden;
-        }
-
-        #sidebar {
-            width: 360px;
-            min-width: 360px;
-            padding: 16px;
-            background: #141829;
-            border-right: 1px solid #2a3152;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            z-index: 1000;
-            overflow-y: auto;
-        }
-
-        h2 {
-            margin: 0;
-            font-size: 1.3rem;
-            color: #ff9e64;
-        }
-
-        .subtitulo {
-            margin: -6px 0 2px 0;
-            font-size: 0.78rem;
-            color: #7aa2f7;
-        }
-
-        #map-container {
-            flex: 1;
-            min-width: 0;
-            height: 100%;
-            position: relative;
-        }
-
-        #map {
-            width: 100%;
-            height: 100%;
-            background: #1a110d;
-        }
-
-        label {
-            font-size: 0.8rem;
-            color: #9aa5ce;
-            display: block;
-            margin-bottom: 3px;
-        }
-
-        select, button {
-            width: 100%;
-            padding: 8px;
-            border-radius: 6px;
-            border: 1px solid #3b4261;
-            background: #1f2335;
-            color: #ffffff;
-            font-size: 0.86rem;
-        }
-
-        button {
-            background: #e05a2b;
-            border: none;
-            font-weight: bold;
-            cursor: pointer;
-        }
-
-        button:hover {
-            background: #c94b1f;
-        }
-
-        .btn-hud {
-            background: #0284c7;
-        }
-
-        .btn-hud:hover {
-            background: #0369a1;
-        }
-
-        .panel {
-            background: #1f2335;
-            padding: 10px;
-            border-radius: 8px;
-            border: 1px solid #2e3552;
-            font-size: 0.84rem;
-            line-height: 1.45;
-        }
-
-        .alerta-seguridad {
-            background: rgba(245, 158, 11, 0.15);
-            border-left: 3px solid #f59e0b;
-            padding: 6px 8px;
-            margin-top: 6px;
-            font-size: 0.8rem;
-            color: #fcd34d;
-        }
-
-        input[type="range"] {
-            width: 100%;
-            margin: 2px 0 6px 0;
-            accent-color: #ff9e64;
-        }
-
-        /* Modo HUD */
-        body.modo-hud #sidebar {
-            display: none;
-        }
-
-        #hud-overlay {
-            display: none;
-            position: absolute;
-            inset: 0;
-            pointer-events: none;
-            border: 14px solid rgba(56, 189, 248, 0.25);
-            box-shadow: inset 0 0 60px rgba(56, 189, 248, 0.2);
-            z-index: 1200;
-            padding: 20px;
-            font-family: monospace;
-        }
-
-        body.modo-hud #hud-overlay {
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-        }
-
-        .hud-top,
-        .hud-bottom {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            gap: 12px;
-        }
-
-        .hud-box {
-            background: rgba(11, 13, 23, 0.85);
-            border: 1px solid #38bdf8;
-            padding: 10px 14px;
-            border-radius: 6px;
-            color: #7dd3fc;
-            pointer-events: auto;
-        }
-
-        .hud-exit {
-            background: #ef4444;
-            color: white;
-            padding: 8px 14px;
-            width: auto;
-        }
-
-        @media (max-width: 700px) {
-            #sidebar {
-                width: 280px;
-                min-width: 280px;
-            }
-
-            .hud-bottom {
-                flex-direction: column;
-            }
-        }
-    </style>
+    /* Modo HUD */
+    body.modo-hud #sidebar { display: none; }
+    #hud-overlay {
+      display: none;
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      border: 14px solid rgba(56, 189, 248, 0.25);
+      box-shadow: inset 0 0 60px rgba(56, 189, 248, 0.2);
+      z-index: 1200;
+      padding: 20px;
+      font-family: monospace;
+    }
+    body.modo-hud #hud-overlay { display: flex; flex-direction: column; justify-content: space-between; }
+    .hud-top, .hud-bottom { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+    .hud-box {
+      background: rgba(11, 13, 23, 0.85);
+      border: 1px solid #38bdf8;
+      padding: 10px 14px;
+      border-radius: 6px;
+      color: #7dd3fc;
+      pointer-events: auto;
+    }
+    .hud-exit { background: #ef4444; color: white; padding: 8px 14px; width: auto; }
+  </style>
 </head>
-
 <body>
 
-    <div id="sidebar">
+  <div id="sidebar">
+    <h2>MarsWalk SafeNav</h2>
+    <p class="subtitulo">Sector: Delta Cráter Jezero (API NASA WMTS)</p>
 
-        <h2>MarsWalk SafeNav</h2>
-
-        <p class="subtitulo">
-            Sector: Delta Cráter Jezero (Escala Hiperlocal)
-        </p>
-
-        <div>
-            <label for="capaSelect">1. Capa científica de Marte</label>
-
-            <select id="capaSelect">
-                <option value="optico">Óptico (NASA MRO CTX)</option>
-                <option value="topografico">Topográfico (MOLA)</option>
-                <option value="termico">Térmico (THEMIS)</option>
-                <option value="geologico">Geológico / Radiación (USGS)</option>
-            </select>
-        </div>
-
-        <div>
-            <label for="climaSelect">2. Frecuencia tormentas (Datos MEDA)</label>
-
-            <select id="climaSelect">
-                <option value="0.06|14|0.35">
-                    Estación Despejada (Tormenta: 6% | Viento: 14 km/h)
-                </option>
-
-                <option value="0.32|38|0.95">
-                    Temporada Dust Devils (Tormenta: 32% | Viento: 38 km/h)
-                </option>
-
-                <option value="0.78|68|2.40">
-                    Tormenta Regional Polvo (Tormenta: 78% | Viento: 68 km/h)
-                </option>
-            </select>
-        </div>
-
-        <div>
-            <label for="vehiculoSelect">3. Modo de desplazamiento principal</label>
-
-            <select id="vehiculoSelect">
-                <option value="andando">Andando (Astronauta EVA - 3.5 km/h)</option>
-                <option value="coche">En Coche (Rover Presurizado - 15 km/h)</option>
-                <option value="dron">Con Dron (Helicóptero - 35 km/h)</option>
-            </select>
-        </div>
-
-        <div class="panel" id="infoRuta">
-            Haz clic en dos puntos del mapa para marcar
-            <b>Origen (A)</b> y <b>Destino (B)</b>.<br>
-            <small style="color:#9aa5ce;">
-                Los puntos naranjas son refugios seguros.
-            </small>
-        </div>
-
-        <div class="panel" id="panelSensores">
-
-            <b>Simulador Sensores Locales (Sin Satélite):</b><br><br>
-
-            <label for="simPolvo">
-                Polvo / Predicción Tormenta:
-                <span id="valPolvo">15%</span>
-            </label>
-            <input type="range" id="simPolvo" min="0" max="100" value="15">
-
-            <label for="simTerreno">
-                Riesgo Terreno / Pendiente:
-                <span id="valTerreno">20%</span>
-            </label>
-            <input type="range" id="simTerreno" min="0" max="100" value="20">
-
-            <label for="simComms">
-                Señal Comms (Enlace Radio):
-                <span id="valComms">90%</span>
-            </label>
-            <input type="range" id="simComms" min="0" max="100" value="90">
-
-            <label for="simRecursos">
-                Reserva Recursos (O2 / Batería):
-                <span id="valRecursos">85%</span>
-            </label>
-            <input type="range" id="simRecursos" min="0" max="100" value="85">
-
-        </div>
-
-        <button class="btn-hud" id="btnHud">
-            Activar Modo HUD Casco AR
-        </button>
-
-        <button id="btnLimpiar">
-            Reiniciar ruta
-        </button>
-
+    <div>
+      <label for="capaSelect">1. Capa científica de Marte</label>
+      <select id="capaSelect">
+        <option value="optico">Óptico (NASA MRO CTX 6m)</option>
+        <option value="topografico">Topográfico (Relieve / Pendientes)</option>
+        <option value="termico">Térmico (Inercia Suelo THEMIS)</option>
+        <option value="geologico">Geológico / Radiación (USGS)</option>
+      </select>
     </div>
 
-    <div id="map-container">
-
-        <div id="map"></div>
-
-        <div id="hud-overlay">
-
-            <div class="hud-top">
-
-                <div class="hud-box">
-                    <b>VISOR CASCO EVA-01 // PROYECCIÓN AR</b><br>
-                    O2 TRAJE: 94% | BATERÍA: 88% | RAD: 0.64 mSv/d
-                </div>
-
-                <button class="hud-exit" id="btnSalirHud">
-                    Salir de Visor AR
-                </button>
-
-            </div>
-
-            <div class="hud-bottom">
-
-                <div class="hud-box" id="hudTelemetria">
-                    SISTEMA DE NAVEGACIÓN ACTIVO — Marca Origen (A) y Destino (B)
-                </div>
-
-                <div class="hud-box">
-                    <b>BRAZALETE HOLOGRÁFICO</b><br>
-                    Balizas Naranjas: EN LÍNEA | Sin Satélite: OK
-                </div>
-
-            </div>
-
-        </div>
-
+    <div>
+      <label for="climaSelect">2. Frecuencia tormentas (Datos MEDA)</label>
+      <select id="climaSelect">
+        <option value="0.06|14|0.35">Estación Despejada (Tormenta: 6% | Viento: 14 km/h)</option>
+        <option value="0.32|38|0.95">Temporada Dust Devils (Tormenta: 32% | Viento: 38 km/h)</option>
+        <option value="0.78|68|2.40">Tormenta Regional Polvo (Tormenta: 78% | Viento: 68 km/h)</option>
+      </select>
     </div>
 
-    <!-- Leaflet: cargar una sola vez -->
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <div>
+      <label for="vehiculoSelect">3. Modo de desplazamiento principal</label>
+      <select id="vehiculoSelect">
+        <option value="andando">Andando (Astronauta EVA - 3.5 km/h)</option>
+        <option value="coche">En Coche (Rover Presurizado - 15 km/h)</option>
+        <option value="dron">Con Dron (Helicóptero - 35 km/h)</option>
+      </select>
+    </div>
 
-    <!-- JavaScript de la aplicación -->
-    <script src="app.js"></script>
+    <div class="panel" id="infoRuta">
+      Haz clic en dos puntos del mapa para marcar <b>Origen (A)</b> y <b>Destino (B)</b>.<br>
+      <small style="color:#9aa5ce;">Los puntos naranjas son balizas/refugios seguros y el círculo cian es la zona base.</small>
+    </div>
 
+    <div class="panel" id="panelSensores">
+      <b>Simulador Sensores Locales (Sin Satélite):</b><br><br>
+
+      <label for="simPolvo">Polvo / Predicción Tormenta: <span id="valPolvo">15%</span></label>
+      <input type="range" id="simPolvo" min="0" max="100" value="15">
+
+      <label for="simTerreno">Riesgo Terreno / Pendiente: <span id="valTerreno">20%</span></label>
+      <input type="range" id="simTerreno" min="0" max="100" value="20">
+
+      <label for="simComms">Señal Comms (Enlace Radio): <span id="valComms">90%</span></label>
+      <input type="range" id="simComms" min="0" max="100" value="90">
+
+      <label for="simRecursos">Reserva Recursos (O2 / Batería): <span id="valRecursos">85%</span></label>
+      <input type="range" id="simRecursos" min="0" max="100" value="85">
+    </div>
+
+    <button class="btn-hud" id="btnHud">Activar Modo HUD Casco AR</button>
+    <button id="btnLimpiar">Reiniciar ruta</button>
+  </div>
+
+  <div id="map-container">
+    <div id="map"></div>
+
+    <div id="hud-overlay">
+      <div class="hud-top">
+        <div class="hud-box">
+          <b>VISOR CASCO EVA-01 // PROYECCIÓN AR</b><br>
+          O2 TRAJE: 94% | BATERÍA: 88% | RAD: 0.64 mSv/d
+        </div>
+        <button class="hud-exit" id="btnSalirHud">Salir de Visor AR</button>
+      </div>
+      <div class="hud-bottom">
+        <div class="hud-box" id="hudTelemetria">
+          SISTEMA DE NAVEGACIÓN ACTIVO — Marca Origen (A) y Destino (B)
+        </div>
+        <div class="hud-box">
+          <b>BRAZALETE HOLOGRÁFICO</b><br>
+          Balizas Naranjas: EN LÍNEA | Sin Satélite: OK
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="app.js"></script>
 </body>
 </html>

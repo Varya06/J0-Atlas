@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mars SafeNav - Planificador de Rutas</title>
+  <!-- Sustituye por la ruta local si descargaste Leaflet en tu carpeta -->
+  <link rel="stylesheet" href="[RUTA_A_LEAFLET_CSS]" />
+  <style>
+    body { margin: 0; font-family: system-ui, sans-serif; display: flex; height: 100vh; background: #0b0d17; color: #fff; }
+    #sidebar { width: 320px; padding: 20px; background: #141829; border-right: 1px solid #2a3152; display: flex; flex-direction: column; gap: 16px; }
+    #map { flex: 1; height: 100%; background: #1a110d; }
+    label { font-size: 0.85rem; color: #9aa5ce; display: block; margin-bottom: 6px; }
+    select, button { width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #3b4261; background: #1f2335; color: #fff; font-size: 0.95rem; }
+    button { background: #e05a2b; border: none; font-weight: bold; cursor: pointer; }
+    button:hover { background: #c94b1f; }
+    .panel-datos { background: #1f2335; padding: 14px; border-radius: 8px; font-size: 0.9rem; line-height: 1.6; }
+    .alerta { color: #ff9e64; font-weight: bold; }
+  </style>
+</head>
+<body>
+
+  <div id="sidebar">
+    <h2>Mars SafeNav</h2>
+    
+    <div>
+      <label for="capaSelect">Tipo de mapa científico</label>
+      <select id="capaSelect">
+        <option value="optico">Óptico (Superficie real)</option>
+        <option value="topografico">Topográfico (Elevación MOLA)</option>
+        <option value="termico">Térmico (Inercia THEMIS)</option>
+        <option value="radiacion">Radiación superficial</option>
+      </select>
+    </div>
+
+    <div>
+      <label for="vehiculoSelect">Modo de desplazamiento</label>
+      <select id="vehiculoSelect">
+        <option value="3">Astronauta a pie (3 km/h - Máx. 30°)</option>
+        <option value="5">Rover ligero (5 km/h - Máx. 20°)</option>
+        <option value="15">Vehículo presurizado (15 km/h - Máx. 15°)</option>
+      </select>
+    </div>
+
+    <div class="panel-datos" id="infoRuta">
+      Haz clic en el mapa para marcar el <b>Punto A (Origen)</b> y el <b>Punto B (Destino)</b>.
+    </div>
+
+    <button id="btnLimpiar">Reiniciar ruta</button>
+  </div>
+
+  <div id="map"></div>
+
+  <script src="[RUTA_A_LEAFLET_JS]"></script>
+  <script>
+    // 1. Inicializar el mapa centrado en el Cráter Jezero (18.38° N, 77.58° E)
+    const map = L.map('map').setView([18.38, 77.58], 10);
+
+    // 2. Definir las capas WMTS de NASA Mars Trek (pega aquí las URLs obtenidas en el Paso 2)
+    const capasNASA = {
+      optico: L.tileLayer('[URL_WMTS_CAPA_OPTICA_NASA_TREK]', {
+        attribution: 'NASA / JPL / Mars Trek',
+        maxZoom: 18
+      }),
+      topografico: L.tileLayer('[URL_WMTS_CAPA_TOPOGRAFICA_NASA_TREK]', {
+        attribution: 'NASA / MOLA / Mars Trek',
+        maxZoom: 18
+      }),
+      termico: L.tileLayer('[URL_WMTS_CAPA_TERMICA_NASA_TREK]', {
+        attribution: 'NASA / THEMIS / Mars Trek',
+        maxZoom: 18
+      }),
+      radiacion: L.tileLayer('[URL_WMTS_CAPA_RADIACION_O_ALTERNATIVA]', {
+        attribution: 'NASA / Mars Trek',
+        maxZoom: 18
+      })
+    };
+
+    // Cargar capa óptica por defecto
+    let capaActual = capasNASA.optico.addTo(map);
+
+    // Cambiar capa desde el menú desplegable
+    document.getElementById('capaSelect').addEventListener('change', (e) => {
+      map.removeLayer(capaActual);
+      capaActual = capasNASA[e.target.value].addTo(map);
+    });
+
+    // 3. Marcadores de Origen (A), Destino (B) y cálculo básico de ruta
+    let puntos = [];
+    let marcadores = [];
+    let lineaRuta = null;
+
+    // Radio medio de Marte en metros (3.389,5 km) para calcular distancias reales
+    const RADIO_MARTE = 3389500;
+
+    function calcularDistanciaMarte(latlng1, latlng2) {
+      const toRad = (deg) => deg * Math.PI / 180;
+      const dLat = toRad(latlng2.lat - latlng1.lat);
+      const dLon = toRad(latlng2.lng - latlng1.lng);
+      const a = Math.sin(dLat / 2) ** 2 +
+                Math.cos(toRad(latlng1.lat)) * Math.cos(toRad(latlng2.lat)) *
+                Math.sin(dLon / 2) ** 2;
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      return (RADIO_MARTE * c) / 1000; // Devuelve kilómetros
+    }
+
+    function actualizarPanel() {
+      if (puntos.length < 2) return;
+      const distKm = calcularDistanciaMarte(puntos[0], puntos[1]);
+      const velocidadKmH = parseFloat(document.getElementById('vehiculoSelect').value);
+      const tiempoHoras = distKm / velocidadKmH;
+
+      document.getElementById('infoRuta').innerHTML = `
+        <b>Distancia estimada:</b> ${distKm.toFixed(2)} km<br>
+        <b>Tiempo estimado:</b> ${tiempoHoras.toFixed(2)} horas<br>
+        <span class="alerta">Estado:</span> Listo para aplicar algoritmo de rodeo de cráteres.
+      `;
+    }
+
+    map.on('click', (e) => {
+      if (puntos.length >= 2) return;
+      puntos.push(e.latlng);
+      const etiqueta = puntos.length === 1 ? 'Origen (A)' : 'Destino (B)';
+      const marcador = L.marker(e.latlng).addTo(map).bindPopup(etiqueta).openPopup();
+      marcadores.push(marcador);
+
+      if (puntos.length === 2) {
+        lineaRuta = L.polyline(puntos, { color: '#ff9e64', weight: 4 }).addTo(map);
+        actualizarPanel();
+      }
+    });
+
+    document.getElementById('vehiculoSelect').addEventListener('change', actualizarPanel);
+
+    document.getElementById('btnLimpiar').addEventListener('click', () => {
+      marcadores.forEach(m => map.removeLayer(m));
+      if (lineaRuta) map.removeLayer(lineaRuta);
+      puntos = [];
+      marcadores = [];
+      lineaRuta = null;
+      document.getElementById('infoRuta').innerHTML = 'Haz clic en el mapa para marcar el <b>Punto A (Origen)</b> y el <b>Punto B (Destino)</b>.';
+    });
+  </script>
+</body>
+</html>

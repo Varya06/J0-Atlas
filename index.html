@@ -93,22 +93,24 @@
 #alertaAborto {
     display: none;
     position: fixed;
-    top: 50%;
+
+    /* Posición superior centrada */
+    top: 20px;
     left: 50%;
-    transform: translate(-50%, -50%);
+    transform: translateX(-50%);
 
     z-index: 9999;
-    flex-direction: column;
+    flex-direction: row;
     align-items: center;
     justify-content: center;
-    gap: 15px;
+    gap: 12px;
 
-    background: rgba(20, 0, 0, 0.85);
+    background: rgba(35, 5, 5, 0.92);
     border: 3px solid #ef4444;
-    border-radius: 15px;
-    padding: 30px 45px;
+    border-radius: 12px;
+    padding: 10px 22px;
 
-    box-shadow: 0 0 40px rgba(239, 68, 68, 0.8);
+    box-shadow: 0 0 25px rgba(239, 68, 68, 0.65);
     pointer-events: none;
 }
 
@@ -120,39 +122,104 @@
 
 /* Icono */
 .icono-peligro {
-    width: 110px;
-    height: 110px;
-    filter: drop-shadow(0 0 12px #ef4444);
+    width: 48px;
+    height: 48px;
+    filter: drop-shadow(0 0 8px #ef4444);
 }
 
 /* Texto */
 .texto-alerta {
     color: #ef4444;
     font-family: monospace;
-    font-size: 28px;
+    font-size: 20px;
     font-weight: bold;
-    text-align: center;
-    text-shadow: 0 0 12px #ef4444;
+    text-align: left;
+    text-shadow: 0 0 8px #ef4444;
 }
 
 .texto-alerta span {
     display: block;
     color: white;
-    font-size: 16px;
-    margin-top: 8px;
-    letter-spacing: 3px;
+    font-size: 12px;
+    margin-top: 3px;
+    letter-spacing: 2px;
 }
 
 /* Parpadeo */
 @keyframes parpadeoPeligro {
     0%, 100% {
         opacity: 1;
-        transform: translate(-50%, -50%) scale(1);
     }
 
     50% {
-        opacity: 0.25;
-        transform: translate(-50%, -50%) scale(0.92);
+        opacity: 0.4;
+    }
+}
+
+ /* ALERTA DE DESVÍO */
+#alertaDesvio {
+    display: none;
+    position: fixed;
+
+    /* Posición superior centrada */
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+
+    z-index: 9999;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+
+    background: rgba(20, 15, 0, 0.88);
+    border: 2px solid #facc15;
+    border-radius: 12px;
+    padding: 10px 22px;
+
+    box-shadow: 0 0 20px rgba(245, 186, 37, 0.5);
+    pointer-events: none;
+}
+
+/* Mostrar alerta */
+#alertaDesvio.activa {
+    display: flex;
+    animation: parpadeoDesvio 0.8s infinite;
+}
+
+/* Icono */
+.icono-desvio {
+    width: 48px;
+    height: 48px;
+    filter: drop-shadow(0 0 8px #facc15);
+}
+
+/* Texto */
+.texto-alerta-desvio {
+    color: #facc15;
+    font-family: monospace;
+    font-size: 20px;
+    font-weight: bold;
+    text-align: left;
+    text-shadow: 0 0 8px #facc15;
+}
+
+.texto-alerta-desvio span {
+    display: block;
+    color: white;
+    font-size: 12px;
+    margin-top: 3px;
+    letter-spacing: 2px;
+}
+
+/* Parpadeo */
+@keyframes parpadeoDesvio {
+    0%, 100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.4;
     }
 }
    
@@ -264,6 +331,30 @@
           <span>ABORTAR MISIÓN</span>
       </div>
   </div>
+
+    <!-- ALERTA DE ABORTO -->
+  <div id="alertaDesvio">
+      <svg viewBox="0 0 100 100" class="icono-desvio">
+          <!-- Triángulo -->
+          <path
+              d="M50 8 L94 88 H6 Z"
+              fill="#cf770c"
+              stroke="#ffffff"
+              stroke-width="4"
+              stroke-linejoin="round"
+          />
+
+          <!-- Exclamación -->
+          <rect x="46" y="32" width="8" height="30"
+                rx="4" fill="white" />
+
+          <circle cx="50" cy="73" r="5" fill="white" />
+      </svg>
+
+      <div class="texto-alerta-desvio">
+          ¡ATENCIÓN!
+          <span>DESVIAR RUTA</span>
+      </div>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="app.js"></script>

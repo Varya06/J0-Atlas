@@ -76,7 +76,7 @@ document.getElementById('capaSelect').addEventListener('change', (e) => {
 // =========================================================================
 
 // Radio ampliado a 8800 para que el perímetro cian toque el borde del delta igual que en Mars Trek
-const circuloZonaBase = L.circle([18.4447, 77.4508], {
+const circuloZonaBase = L.circle([18.4466, 77.4998], {
   radius: 8800,
   color: '#67e8f9',
   weight: 2.5,
@@ -93,38 +93,38 @@ const circuloZonaBase = L.circle([18.4447, 77.4508], {
 const puntosSegurosNaranja = [
   {
     id: 'S1',
-    nombre: 'Meandro Neretva Vallis',
-    coords: [18.5345, 77.2830],
+    nombre: 'Western Inflow Channel',
+    coords: [18.57531, 77.20410],
     recursos: 'Repetidor UHF en curva del cañón + Refugio térmico'
   },
   {
     id: 'S2',
-    nombre: 'Garganta Entrada Delta',
-    coords: [18.4865, 77.3265],
+    nombre: 'Western Breach',
+    coords: [18.4930, 77.3030],
     recursos: 'Depósito O2 auxiliar + Baliza boca del río'
   },
   {
     id: 'S3',
-    nombre: 'Terraza Delta Occidental',
-    coords: [18.4885, 77.3625],
+    nombre: 'Western Delta Deposit',
+    coords: [18.51022, 77.40511],
     recursos: 'Estación meteo local MEDA + Baterías (oeste del cráter)'
   },
   {
     id: 'S4',
-    nombre: 'Base Perseverance (Hub Central)',
-    coords: [18.4447, 77.4508],
+    nombre: 'Perseverance Landing Ellipse',
+    coords: [18.44658, 77.49979],
     recursos: 'Hábitat principal / Soporte vital completo'
   },
   {
     id: 'S5',
-    nombre: 'Colinas Norte Jezero',
-    coords: [18.5565, 77.4930],
+    nombre: 'Jezero Crater',
+    coords: [18.39735, 77.69435],
     recursos: 'Repetidor largo alcance en borde norte + Refugio'
   },
   {
     id: 'S6',
-    nombre: 'Llanura Cuenca Sureste',
-    coords: [18.4165, 77.5830],
+    nombre: 'Northern Delta Deposit',
+    coords: [18.62839,77.54596],
     recursos: 'Depósito suministros + Baliza oriental'
   }
 ];
@@ -295,27 +295,32 @@ function actualizarTodo() {
   //Para que aparezca la señal de advertencia 
   // Mostrar u ocultar la alerta de peligro según la orden actual
     const alertaAborto = document.getElementById('alertaAborto');
+    const alertaDesvio = document.getElementById('alertaDesvio');
 
   if (recursos < 30 || (comms < 25 && distMinimaSeguro > 3.5)) {
     orden = 'REGRESAR A BASE (ABORTO)';
     alertaAborto.classList.add('activa');
+    alertaDesvio.classList.remove('activa');
     colorOrden = '#ef4444';
     explicacion = `Recursos críticos (${recursos}%) o pérdida de enlace (${comms}%). Retorno inmediato a Origen (${distRegreso.toFixed(2)} km).`;
     lineaDesvioSeguro = L.polyline([posActual, puntos[0]], { color: '#ef4444', weight: 4, dashArray: '6, 6' }).addTo(map);
   } else if (polvo >= 65 && distMinimaSeguro < distRestante && recursos >= 35) {
     orden = `ESPERAR EN PUNTO DE APOYO (${puntoMasCercano.id})`;
     alertaAborto.classList.remove('activa');
+    alertaDesvio.classList.remove('activa');
     colorOrden = '#38bdf8';
     explicacion = `Tormenta local predicha (${polvo}%). Refugiarse en <b>${puntoMasCercano.nombre}</b> a ${distMinimaSeguro.toFixed(2)} km.`;
     lineaDesvioSeguro = L.polyline([posActual, puntoMasCercano.coords], { color: '#38bdf8', weight: 4, dashArray: '5, 5' }).addTo(map);
   } else if (terreno >= 60 || (polvo >= 45 && polvo < 65)) {
     orden = 'CAMBIAR DE TRAMO (DESVÍO)';
     alertaAborto.classList.remove('activa');
+    alertaDesvio.classList.add('activa');
     colorOrden = '#facc15';
     explicacion = `Riesgo en tramo (Terreno: ${terreno}%, Polvo: ${polvo}%). Desviar ruta bordeando obstáculo.`;
   } else {
     orden = 'CONTINUAR RUTA PREVISTA';
     alertaAborto.classList.remove('activa');
+    alertaDesvio.classList.remove('activa');
     colorOrden = '#4ade80';
     explicacion = `Sensores nominales. Quedan ${distRestante.toFixed(2)} km hasta destino con margen seguro.`;
   }

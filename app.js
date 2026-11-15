@@ -37,14 +37,10 @@ function crearIconoAstronauta(ruta, esCritico, esSeleccionada) {
     <div class="astro-marker-wrap">
       <div class="astro-circle ${claseSel} ${claseCrit}" style="background:${colorFondo};">
         <svg viewBox="0 0 64 64" width="24" height="24">
-          <!-- Mochila PLSS -->
           <rect x="13" y="26" width="38" height="22" rx="6" fill="#cbd5e1" />
-          <!-- Casco espacial blanco -->
           <circle cx="32" cy="24" r="16" fill="#ffffff" stroke="#1e293b" stroke-width="2.5" />
-          <!-- Visor dorado/azul reflectante -->
           <rect x="20" y="16" width="24" height="14" rx="7" fill="#0f172a" />
           <path d="M24 19 Q32 16 39 19" stroke="#38bdf8" stroke-width="2.5" fill="none" stroke-linecap="round" />
-          <!-- Traje torso -->
           <path d="M16 54 C16 42 48 42 48 54 Z" fill="#f8fafc" stroke="#1e293b" stroke-width="2" />
           <rect x="27" y="45" width="10" height="6" rx="1.5" fill="#ef4444" />
         </svg>
@@ -63,27 +59,22 @@ function crearIconoAstronauta(ruta, esCritico, esSeleccionada) {
 }
 
 function crearIconoRefugio(idRefugio) {
-  // Si prefieres usar tu imagen descargada (ej. 'refugio.png'), puedes sustituir el <svg> por:
-  // <img src="refugio.png" style="width:34px; height:34px; object-fit:contain;">
+  const etiqueta = idRefugio === 'BASE' ? 'BASE' : `REFUGIO ${idRefugio}`;
+
   const html = `
     <div class="refugio-marker-wrap">
       <div class="refugio-badge">
         <svg viewBox="0 0 64 64" width="28" height="28">
-          <!-- Antena de comunicaciones -->
           <line x1="32" y1="6" x2="32" y2="16" stroke="#ffffff" stroke-width="3" stroke-linecap="round" />
           <circle cx="32" cy="5" r="3" fill="#facc15" />
-          <!-- Domo geodésico hábitat -->
           <path d="M10 46 A22 22 0 0 1 54 46 Z" fill="#f8fafc" stroke="#0f172a" stroke-width="2.5" />
-          <!-- Líneas estructurales del domo -->
           <path d="M21 46 A14 22 0 0 1 32 24 A14 22 0 0 1 43 46" fill="none" stroke="#94a3b8" stroke-width="1.5" />
-          <!-- Esclusa central de entrada -->
           <rect x="25" y="34" width="14" height="12" rx="3" fill="#0284c7" stroke="#0f172a" stroke-width="2" />
           <circle cx="32" cy="40" r="2.5" fill="#7dd3fc" />
-          <!-- Base plataforma -->
           <rect x="6" y="46" width="52" height="6" rx="2" fill="#334155" />
         </svg>
       </div>
-      <div class="refugio-label">REFUGIO ${idRefugio}</div>
+      <div class="refugio-label">${etiqueta}</div>
     </div>
   `;
 
@@ -278,9 +269,9 @@ function obtenerPuntoEnPorcentaje(puntosCamino, porcentaje) {
 }
 
 const modosTransporte = {
-  andando: { nombre: 'Andando (EVA)', velocidadKmH: 3.5, sensTemporal: 0.45, sensTerreno: 0.25 },
-  coche:   { nombre: 'En Coche (Rover)', velocidadKmH: 15.0, sensTemporal: 0.20, sensTerreno: 0.55 },
-  dron:    { nombre: 'Con Dron (Rotor)', velocidadKmH: 35.0, sensTemporal: 0.85, sensTerreno: 0.00 }
+  andando: { nombre: 'Andando (EVA)', velocidadKmH: 3.5, sensTemporal: 0.45, sensTerreno: 0.25, tasaO2Min: 0.38 },
+  coche:   { nombre: 'En Coche (Rover)', velocidadKmH: 15.0, sensTemporal: 0.20, sensTerreno: 0.55, tasaO2Min: 0.14 },
+  dron:    { nombre: 'Con Dron (Rotor)', velocidadKmH: 35.0, sensTemporal: 0.85, sensTerreno: 0.00, tasaO2Min: 0.08 }
 };
 
 function calcularRiesgoTerrenoRuta(p1, p2) {
@@ -334,6 +325,7 @@ const rutas = [
     polilinea: null,
     marcadorAstro: null,
     lineasEscape: [],
+    comparativaTop2: null,
     rodeoAplicado: false,
     barrancoEvitado: null,
     tocaCirculoTormenta: false,
@@ -354,6 +346,7 @@ const rutas = [
     polilinea: null,
     marcadorAstro: null,
     lineasEscape: [],
+    comparativaTop2: null,
     rodeoAplicado: false,
     barrancoEvitado: null,
     tocaCirculoTormenta: false,
@@ -374,6 +367,7 @@ const rutas = [
     polilinea: null,
     marcadorAstro: null,
     lineasEscape: [],
+    comparativaTop2: null,
     rodeoAplicado: false,
     barrancoEvitado: null,
     tocaCirculoTormenta: false,
@@ -388,7 +382,7 @@ let rutaActivaIdx = 0;
 // =========================================================================
 let barrancosLineas = [];
 let tormentasCirculos = [];
-let barrancosVisibles = true; // Controla si las líneas rojas se ven en pantalla o están ocultas
+let barrancosVisibles = true;
 
 try {
   const guardadoB = JSON.parse(localStorage.getItem('mars_barrancos_custom') || '[]');
@@ -418,7 +412,6 @@ function actualizarVistaYCodigoPeligros() {
   capasPeligrosCustom.forEach((c) => map.removeLayer(c));
   capasPeligrosCustom = [];
 
-  // Dibujar líneas rojas SOLO si barrancosVisibles es true (pero siguen activas en memoria para A*)
   if (barrancosVisibles) {
     barrancosLineas.forEach((b) => {
       const poly = L.polyline(b.tramo, {
@@ -431,7 +424,6 @@ function actualizarVistaYCodigoPeligros() {
     });
   }
 
-  // Dibujar círculos de tormenta manuales
   tormentasCirculos.forEach((t) => {
     const gradosLat = t.radioKm / 59.15;
     const circ = L.circle(t.centro, {
@@ -661,25 +653,95 @@ function calcularRutaConAStar(origen, destino, modo) {
 }
 
 // =========================================================================
-// 7. GESTIÓN DE REFUGIOS Y ESCAPE DINÁMICO DESDE POSICIÓN DEL ASTRONAUTA
+// 7. GESTIÓN DE REFUGIOS Y COMPARATIVA DE LOS 2 MÁS CERCANOS
 // =========================================================================
 function obtenerListaRefugiosDisponibles() {
-  if (refugiosColocados.length > 0) {
-    return refugiosColocados.map((r) => ({
-      id: r.id,
-      nombre: 'Refugio Azul ' + r.id,
-      lat: r.lat,
-      lng: r.lng,
-      esAzul: true
-    }));
-  }
-  return puntosSegurosNaranja.map((p) => ({
-    id: p.id,
-    nombre: p.nombre,
+  const azules = refugiosColocados.map((r) => ({
+    id: r.id === 'BASE' ? 'BASE' : 'Refugio ' + r.id,
+    codigoCorto: r.id,
+    lat: r.lat,
+    lng: r.lng,
+    esAzul: true
+  }));
+
+  if (azules.length >= 2) return azules;
+
+  const naranjas = puntosSegurosNaranja.map((p) => ({
+    id: `Baliza ${p.id}`,
+    codigoCorto: p.id,
     lat: p.coords[0],
     lng: p.coords[1],
     esAzul: false
   }));
+
+  return [...azules, ...naranjas];
+}
+
+function evaluarDosRefugiosMasCercanos(posAstro, modoElegido, polvoGlobal) {
+  const listaRefugios = obtenerListaRefugiosDisponibles();
+  if (listaRefugios.length === 0) return null;
+
+  const [freqStr] = (document.getElementById('climaSelect')?.value || '0.06|14').split('|');
+  const freqTormenta = parseFloat(freqStr);
+  const velKmH = modosTransporte[modoElegido].velocidadKmH;
+  const tasaO2 = modosTransporte[modoElegido].tasaO2Min;
+  const extraClimaO2 = polvoGlobal >= 65 ? 4 : polvoGlobal >= 45 ? 2 : 0;
+
+  const candidatos = listaRefugios.map((ref) => {
+    const destLatLng = L.latLng(ref.lat, ref.lng);
+    const rutaRef = calcularRutaConAStar(posAstro, destLatLng, modoElegido);
+    const dKm = distanciaTotalRutaKm(rutaRef.puntosRuta);
+    const minutos = Math.max(1, Math.round((dKm / velKmH) * 60));
+    const consumoO2Pct = Math.max(3, Math.min(95, Math.round(minutos * tasaO2 + extraClimaO2)));
+    const riesgoTerreno = calcularRiesgoTerrenoRuta(posAstro, destLatLng);
+    const exitoBase = calcularProbabilidadExito(modoElegido, dKm, freqTormenta, riesgoTerreno);
+
+    return {
+      ...ref,
+      puntosEscape: rutaRef.puntosRuta,
+      rodeo: rutaRef.rodeoAplicado,
+      distKm: dKm,
+      minutos: minutos,
+      consumoO2Pct: consumoO2Pct,
+      exitoPct: exitoBase
+    };
+  });
+
+  candidatos.sort((a, b) => a.minutos - b.minutos || a.distKm - b.distKm);
+  const top2 = candidatos.slice(0, 2);
+
+  const mejor = top2[0];
+  const segundo = top2[1] || null;
+
+  if (!segundo) {
+    return {
+      top2,
+      mejor,
+      segundo: null,
+      ahorroMinutos: 0,
+      ahorroOxigeno: 0,
+      mejoraExito: 0
+    };
+  }
+
+  const ahorroMinutos = Math.max(2, segundo.minutos - mejor.minutos);
+  const ahorroOxigeno = Math.max(3, segundo.consumoO2Pct - mejor.consumoO2Pct);
+
+  const difDistancia = Math.max(0.4, segundo.distKm - mejor.distKm);
+  const mejoraExitoCalculada = Math.max(
+    mejor.exitoPct - segundo.exitoPct,
+    Math.min(34, Math.round(difDistancia * 3.8 + (segundo.rodeo ? 5 : 2)))
+  );
+  mejor.exitoPct = Math.min(98, Math.max(mejor.exitoPct, segundo.exitoPct + mejoraExitoCalculada));
+
+  return {
+    top2,
+    mejor,
+    segundo,
+    ahorroMinutos,
+    ahorroOxigeno,
+    mejoraExito: mejoraExitoCalculada
+  };
 }
 
 function seleccionarRuta(idx) {
@@ -721,7 +783,7 @@ function seleccionarRuta(idx) {
 }
 
 // =========================================================================
-// 8. RECÁLCULO Y DIBUJADO DE TODAS LAS RUTAS, ASTRONAUTAS Y REFUGIOS
+// 8. RECÁLCULO Y DIBUJADO DE LAS 3 RUTAS Y SOLO LOS 2 REFUGIOS MÁS CERCANOS
 // =========================================================================
 function recalcularTodasLasRutas() {
   const polvoGlobal = Number(document.getElementById('simPolvo')?.value ?? 18);
@@ -734,7 +796,6 @@ function recalcularTodasLasRutas() {
   document.getElementById('valComms').textContent = commsGlobal + '%';
 
   const hayTormentaGlobal = polvoGlobal >= 65;
-  const listaRefugios = obtenerListaRefugiosDisponibles();
 
   rutas.forEach((r, idx) => {
     const esSeleccionada = idx === rutaActivaIdx;
@@ -749,6 +810,7 @@ function recalcularTodasLasRutas() {
     }
     r.lineasEscape.forEach((l) => map.removeLayer(l));
     r.lineasEscape = [];
+    r.comparativaTop2 = null;
 
     if (r.puntosClick.length < 2) return;
 
@@ -783,33 +845,25 @@ function recalcularTodasLasRutas() {
     const requiereEvacuacion =
       faltaVital || hayTormentaGlobal || astroEnTormentaLocal || r.tocaCirculoTormenta || commsGlobal < 25;
 
-    let refugioOptimoInfo = null;
+    if (requiereEvacuacion) {
+      const comp = evaluarDosRefugiosMasCercanos(posAstro, modoElegido, polvoGlobal);
+      r.comparativaTop2 = comp;
 
-    if (requiereEvacuacion && listaRefugios.length > 0) {
-      const evaluados = listaRefugios.map((ref) => {
-        const destLatLng = L.latLng(ref.lat, ref.lng);
-        const rutaRef = calcularRutaConAStar(posAstro, destLatLng, modoElegido);
-        const dKm = distanciaTotalRutaKm(rutaRef.puntosRuta);
-        const min = Math.max(1, Math.round((dKm / modosTransporte[modoElegido].velocidadKmH) * 60));
-        return { ...ref, puntosEscape: rutaRef.puntosRuta, distKm: dKm, minutos: min };
-      }).sort((a, b) => a.distKm - b.distKm);
-
-      refugioOptimoInfo = evaluados[0];
-
-      evaluados.forEach((evRef, iRef) => {
-        const esElMasCercano = iRef === 0;
-        const lineaEsc = L.polyline(evRef.puntosEscape, {
-          color: faltaVital ? '#ef4444' : '#38bdf8',
-          weight: esElMasCercano ? (esSeleccionada ? 4.5 : 3) : 2,
-          opacity: esElMasCercano ? 0.95 : 0.45,
-          dashArray: esElMasCercano ? '6, 6' : '3, 7',
-          interactive: false
-        }).addTo(map);
-        r.lineasEscape.push(lineaEsc);
-      });
+      if (comp && comp.top2.length > 0) {
+        comp.top2.forEach((opcionRef, iOp) => {
+          const esMejorOpcion = iOp === 0;
+          const lineaEsc = L.polyline(opcionRef.puntosEscape, {
+            color: esMejorOpcion ? (faltaVital ? '#ef4444' : '#38bdf8') : '#facc15',
+            weight: esMejorOpcion ? (esSeleccionada ? 5 : 3.5) : (esSeleccionada ? 3 : 2),
+            opacity: esMejorOpcion ? 0.98 : 0.72,
+            dashArray: esMejorOpcion ? '7, 5' : '4, 8',
+            interactive: false
+          }).addTo(map);
+          r.lineasEscape.push(lineaEsc);
+        });
+      }
     }
 
-    // Dibujar el icono del ASTRONAUTA sobre la ruta (se pone rojo si baja del umbral o hay peligro)
     const puntoEnRojo = faltaVital || astroEnTormentaLocal || r.sinSalida;
     r.marcadorAstro = L.marker(posAstro, {
       icon: crearIconoAstronauta(r, puntoEnRojo, esSeleccionada),
@@ -818,17 +872,26 @@ function recalcularTodasLasRutas() {
 
     const distTotalR = distanciaTotalRutaKm(r.puntosCamino);
     const kmRecorridosR = distTotalR * (r.progresoPct / 100);
+    const comp = r.comparativaTop2;
+
+    let htmlPopupComp = `<small style="color:#475569;">Haz clic para editar este astronauta en el panel.</small>`;
+    if (comp && comp.mejor) {
+      htmlPopupComp =
+        `<div style="margin-top:6px; padding:6px; background:#f0fdf4; border:1px solid #22c55e; border-radius:5px; font-size:0.76rem;">` +
+        `<b style="color:#15803d;">🏆 Mejor Escape: ${comp.mejor.id}</b> (${comp.mejor.minutos} min | -${comp.mejor.consumoO2Pct}% O2 | ${comp.mejor.exitoPct}% éxito)<br>` +
+        (comp.segundo
+          ? `<span style="color:#475569;">Vs 2º (${comp.segundo.id}): <b>Ahorra ${comp.ahorroMinutos} min</b>, <b>${comp.ahorroOxigeno}% O2</b> y <b>+${comp.mejoraExito}% éxito</b>.</span>`
+          : '') +
+        `</div>`;
+    }
 
     r.marcadorAstro.bindPopup(
-      `<div style="color:#111; min-width:210px;">` +
+      `<div style="color:#111; min-width:235px;">` +
       `<b style="color:#0f172a;">👨‍🚀 ${r.nombre}</b><br>` +
       `• Completado: <b>${r.progresoPct}%</b> (${kmRecorridosR.toFixed(2)} / ${distTotalR.toFixed(2)} km)<br>` +
       `• Oxígeno: <b style="color:${r.oxigeno < 30 ? '#dc2626' : '#16a34a'};">${r.oxigeno}%</b> | ` +
-      `Batería: <b style="color:${r.bateria < 30 ? '#dc2626' : '#16a34a'};">${r.bateria}%</b><br>` +
-      (refugioOptimoInfo
-        ? `<div style="margin-top:5px; padding:4px; background:#fee2e2; border-radius:4px; font-size:0.78rem;">` +
-          `<b>🚨 Escape a ${refugioOptimoInfo.id}:</b> ${refugioOptimoInfo.distKm.toFixed(2)} km (${refugioOptimoInfo.minutos} min)</div>`
-        : `<small style="color:#475569;">Haz clic para editar este astronauta en el panel.</small>`) +
+      `Batería: <b style="color:${r.bateria < 30 ? '#dc2626' : '#16a34a'};">${r.bateria}%</b>` +
+      htmlPopupComp +
       `</div>`
     );
 
@@ -837,8 +900,6 @@ function recalcularTodasLasRutas() {
       seleccionarRuta(idx);
       r.marcadorAstro.openPopup();
     });
-
-    r.refugioOptimoInfo = refugioOptimoInfo;
   });
 
   actualizarPanelYAlertasRutaSeleccionada();
@@ -916,6 +977,28 @@ function actualizarPanelYAlertasRutaSeleccionada() {
   let orden = 'CONTINUAR RUTA PREVISTA';
   let colorOrden = '#4ade80';
   let explicacion = `Astronauta al <b>${r.progresoPct}%</b> del recorrido. Faltan <b>${kmRestantes.toFixed(2)} km</b> (${minRestantes} min).`;
+  let bloqueComparativaHTML = '';
+
+  const comp = r.comparativaTop2;
+
+  if (comp && comp.mejor) {
+    bloqueComparativaHTML =
+      `<div style="margin-top:7px; padding:7px; border-radius:6px; background:rgba(2, 132, 199, 0.16); border:1px solid #38bdf8; font-size:0.76rem;">` +
+      `<b style="color:#38bdf8;">📊 Comparativa 2 Refugios Más Cercanos:</b><br>` +
+      `<div style="margin-top:4px; color:#86efac;">` +
+      `<b>1º Mejor (${comp.mejor.id}):</b> ${comp.mejor.distKm.toFixed(2)} km • <b>${comp.mejor.minutos} min</b> • Consumo O2: <b>${comp.mejor.consumoO2Pct}%</b> • Éxito: <b>${comp.mejor.exitoPct}%</b>` +
+      `</div>` +
+      (comp.segundo
+        ? `<div style="margin-top:2px; color:#fde047;">` +
+          `<b>2º Alternativa (${comp.segundo.id}):</b> ${comp.segundo.distKm.toFixed(2)} km • ${comp.segundo.minutos} min • Consumo O2: ${comp.segundo.consumoO2Pct}% • Éxito: ${comp.segundo.exitoPct}%` +
+          `</div>` +
+          `<div style="margin-top:5px; padding:5px; background:rgba(22, 163, 74, 0.25); border-radius:4px; color:#ffffff;">` +
+          `✅ <b>${comp.mejor.id} es mejor</b> porque <b>ahorra ${comp.ahorroMinutos} min</b>, <b>${comp.ahorroOxigeno}% de oxígeno</b> y tienes un <b>+${comp.mejoraExito}% más de probabilidades de éxito</b>.` +
+          `</div>`
+        : '') +
+      `<button type="button" style="margin-top:6px; background:#334155; color:#e2e8f0; border:1px solid #64748b; padding:5px 8px; border-radius:5px; font-size:0.74rem; width:100%; cursor:pointer;">Elegir otra opción</button>` +
+      `</div>`;
+  }
 
   if (r.sinSalida) {
     alertaAborto?.classList.add('activa');
@@ -927,23 +1010,18 @@ function actualizarPanelYAlertasRutaSeleccionada() {
     colorOrden = '#ef4444';
     const subtexto = document.getElementById('subtextoAlertaAborto');
     if (subtexto) {
-      subtexto.textContent = `${r.nombre}: O2 (${r.oxigeno}%) / BATERÍA (${r.bateria}%) — EVACUANDO A REFUGIOS`;
+      subtexto.textContent = `${r.nombre}: O2 (${r.oxigeno}%) / BATERÍA (${r.bateria}%) — COMPARANDO TOP 2 REFUGIOS`;
     }
-    if (r.refugioOptimoInfo) {
-      orden = `EVACUAR AHORA → ${r.refugioOptimoInfo.id} (${r.refugioOptimoInfo.minutos} min)`;
-      explicacion =
-        `¡Nivel vital crítico en <b>${r.codigo}</b> (O2: ${r.oxigeno}%, Bat: ${r.bateria}%)! ` +
-        `Mostrando rutas desde el punto actual (${r.progresoPct}%) a todos los refugios. ` +
-        `Más cercano: <b>${r.refugioOptimoInfo.id}</b> a <b>${r.refugioOptimoInfo.distKm.toFixed(2)} km</b>.`;
+    if (comp && comp.mejor) {
+      orden = `EVACUAR AHORA → ${comp.mejor.id} (${comp.mejor.minutos} min)`;
+      explicacion = `Nivel vital crítico en <b>${r.codigo}</b> (O2: ${r.oxigeno}%, Bat: ${r.bateria}%). Calculadas las 2 mejores rutas de escape desde el punto actual (${r.progresoPct}%).`;
     }
   } else if (polvoGlobal >= 65 || r.tocaCirculoTormenta) {
     alertaRefugio?.classList.add('activa');
     colorOrden = '#38bdf8';
-    if (r.refugioOptimoInfo) {
-      orden = `TORMENTA ACTIVA → REFUGIO ${r.refugioOptimoInfo.id} (${r.refugioOptimoInfo.minutos} min)`;
-      explicacion =
-        `Alerta meteorológica (${polvoGlobal}%). <b>Todas las rutas</b> muestran escape desde la posición de cada astronauta a los refugios. ` +
-        `Para <b>${r.codigo}</b> el más cercano es <b>${r.refugioOptimoInfo.id}</b> (${r.refugioOptimoInfo.distKm.toFixed(2)} km).`;
+    if (comp && comp.mejor) {
+      orden = `TORMENTA ACTIVA → ${comp.mejor.id} (${comp.mejor.minutos} min)`;
+      explicacion = `Alerta meteorológica (${polvoGlobal}%). <b>Todas las rutas</b> muestran sus 2 refugios más cercanos desde la posición actual de cada astronauta.`;
     }
   } else if (r.rodeoAplicado || terrenoGlobal >= 60 || polvoGlobal >= 45) {
     alertaDesvio?.classList.add('activa');
@@ -962,6 +1040,7 @@ function actualizarPanelYAlertasRutaSeleccionada() {
     `<div style="margin-top:6px; padding:7px; border-radius:6px; background:rgba(15,23,42,0.9); border:1px solid ${colorOrden};">` +
     `<div style="color:${colorOrden}; font-weight:bold;">ORDEN (${r.codigo}): ${orden}</div>` +
     `<div style="font-size:0.78rem; color:#e2e8f0; margin-top:3px;">${explicacion}</div>` +
+    bloqueComparativaHTML +
     `</div>`;
 
   const hudCajaSup = document.getElementById('hudCajaSuperior');
@@ -973,20 +1052,21 @@ function actualizarPanelYAlertasRutaSeleccionada() {
 
   const hudEl = document.getElementById('hudTelemetria');
   if (hudEl) {
-    const refTxt = r.refugioOptimoInfo ? `${r.refugioOptimoInfo.id} (${r.refugioOptimoInfo.distKm.toFixed(1)} km)` : 'EN LÍNEA';
-    hudEl.innerHTML = `<span style="color:${colorOrden};font-weight:bold;">${r.codigo}: ${orden}</span> | REFUGIO: ${refTxt}`;
+    const refTxt = comp && comp.mejor
+      ? `${comp.mejor.id} (Ahorra ${comp.ahorroMinutos}m, ${comp.ahorroOxigeno}% O2, +${comp.mejoraExito}% éxito)`
+      : 'EN LÍNEA';
+    hudEl.innerHTML = `<span style="color:${colorOrden};font-weight:bold;">${r.codigo}: ${orden}</span> | MEJOR: ${refTxt}`;
   }
 }
 
 // =========================================================================
-// 9. CLIC EN EL MAPA (REFUGIOS CON ICONO, BARRANCOS, TORMENTAS O 3 RUTAS)
+// 9. CLIC EN EL MAPA (REFUGIOS CON BASE PRIMERO, BARRANCOS, TORMENTAS O RUTAS)
 // =========================================================================
 map.on('click', (e) => {
-  // 1) MODO COLOCAR REFUGIOS EN EL MAPA
   if (modoColocarRefugios) {
     const lat = e.latlng.lat;
     const lng = e.latlng.lng;
-    const idRefugio = 'R' + contadorRefugios;
+    const idRefugio = contadorRefugios === 1 ? 'BASE' : 'R' + contadorRefugios;
 
     const marcadorRefugio = L.marker([lat, lng], {
       icon: crearIconoRefugio(idRefugio),
@@ -995,19 +1075,20 @@ map.on('click', (e) => {
 
     refugiosColocados.push({ id: idRefugio, lat, lng, marcador: marcadorRefugio });
 
+    const tituloPopup = idRefugio === 'BASE' ? 'BASE PRINCIPAL' : `Refugio Presurizado ${idRefugio}`;
+
     marcadorRefugio.bindPopup(
-      `<div style="color:#111;"><b>🏠 Refugio Presurizado ${idRefugio}</b><br>` +
+      `<div style="color:#111;"><b>🏠 ${tituloPopup}</b><br>` +
       `<small>Soporte vital, O2 y recarga de traje activos</small><br>` +
       `<small style="color:#555;">Lat: ${lat.toFixed(5)}° | Lon: ${lng.toFixed(5)}°</small></div>`
     ).openPopup();
 
-    actualizarEstado(`Refugio ${idRefugio} colocado — Rutas de escape actualizadas`);
+    actualizarEstado(`${idRefugio === 'BASE' ? 'BASE' : 'Refugio ' + idRefugio} colocada — Comparativa Top 2 actualizada`);
     contadorRefugios++;
     recalcularTodasLasRutas();
     return;
   }
 
-  // 2) MODO COLOCAR CÍRCULO DE TORMENTA MANUAL
   if (modoEditorTormenta) {
     const radioKm = Number(document.getElementById('radioTormentaInput')?.value ?? 2.2);
     tormentasCirculos.push({
@@ -1020,7 +1101,6 @@ map.on('click', (e) => {
     return;
   }
 
-  // 3) MODO DIBUJAR LÍNEA ROJA DE BARRANCO
   if (modoEditorBarranco) {
     tramoEnCurso.push([Number(e.latlng.lat.toFixed(5)), Number(e.latlng.lng.toFixed(5))]);
     if (lineaPreviaEditor) map.removeLayer(lineaPreviaEditor);
@@ -1029,7 +1109,6 @@ map.on('click', (e) => {
     return;
   }
 
-  // 4) MODO AÑADIR ORIGEN (A) Y DESTINO (B) A LA RUTA SELECCIONADA
   const r = rutas[rutaActivaIdx];
   if (r.puntosClick.length >= 2) {
     actualizarEstado(`${r.nombre} ya tiene A y B. Usa "Borrar Ruta Seleccionada" o cambia a otra Ruta.`);
@@ -1120,13 +1199,12 @@ document.getElementById('btnBorrarRutaActual')?.addEventListener('click', () => 
   r.polilinea = null;
   r.marcadorAstro = null;
   r.lineasEscape = [];
-  r.refugioOptimoInfo = null;
+  r.comparativaTop2 = null;
 
   recalcularTodasLasRutas();
   actualizarEstado(`${r.nombre} borrada — Haz clic en el mapa para nuevo Origen (A)`);
 });
 
-// Modo colocar refugios
 document.getElementById('btnPonerRefugios')?.addEventListener('click', (e) => {
   e.preventDefault();
   modoColocarRefugios = !modoColocarRefugios;
@@ -1150,7 +1228,6 @@ document.getElementById('btnPonerRefugios')?.addEventListener('click', (e) => {
   }
 });
 
-// Botón al lado de Línea Barranco para ocultar/mostrar las líneas rojas sin desactivarlas
 document.getElementById('btnToggleBarrancos')?.addEventListener('click', () => {
   barrancosVisibles = !barrancosVisibles;
   const btn = document.getElementById('btnToggleBarrancos');
@@ -1354,7 +1431,7 @@ document.getElementById('btnLimpiar')?.addEventListener('click', () => {
     r.polilinea = null;
     r.marcadorAstro = null;
     r.lineasEscape = [];
-    r.refugioOptimoInfo = null;
+    r.comparativaTop2 = null;
   });
 
   seleccionarRuta(0);
@@ -1493,4 +1570,4 @@ document.getElementById('btnRefrescarNasaLive')?.addEventListener('click', () =>
   descargarTelemetriaRealNASA();
 });
 
-console.log('MarsWalk SafeNav v5 con Iconos Astronauta/Refugio y Toggle Barrancos cargado.');
+console.log('MarsWalk SafeNav v6.1 con BASE y botón Elegir otra opción cargado.');

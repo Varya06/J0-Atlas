@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -68,7 +68,7 @@
     input[type="range"] { width: 100%; margin: 2px 0 5px 0; accent-color: #ff9e64; cursor: pointer; }
     textarea { user-select: text; }
 
-    /* Selector de las 3 Rutas */
+    /* 3-Route Selector */
     .selector-rutas {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
@@ -106,7 +106,7 @@
       white-space: nowrap;
     }
 
-    /* Iconos personalizados de Astronauta y Refugio en el mapa */
+    /* Custom Astronaut & Shelter Map Icons */
     .astro-marker-wrap {
       display: flex;
       flex-direction: column;
@@ -180,12 +180,12 @@
       50% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
     }
 
-    /* Filtros científicos sobre las teselas NASA */
+    /* Scientific Tile Filters */
     .filtro-topografico .leaflet-tile-pane { filter: sepia(100%) hue-rotate(190deg) saturate(260%) contrast(115%); }
     .filtro-termico .leaflet-tile-pane { filter: sepia(100%) hue-rotate(-35deg) saturate(380%) contrast(125%); }
     .filtro-geologico .leaflet-tile-pane { filter: sepia(100%) hue-rotate(65deg) saturate(240%) contrast(115%); }
 
-    /* Banner inferior estilo GPS */
+    /* GPS Bottom Banner */
     #gps-banner {
       display: none;
       position: absolute;
@@ -205,7 +205,7 @@
       pointer-events: none;
     }
 
-    /* Modo HUD */
+    /* HUD Mode */
     body.modo-hud #sidebar { display: none; }
     #hud-overlay {
       display: none;
@@ -238,7 +238,7 @@
       z-index: 1300;
     }
 
-    /* Botón Refugios Azules */
+    /* Place Shelters Button */
     #btnPonerRefugios {
       background: #7476eb;
       color: #ffe8e8;
@@ -252,7 +252,7 @@
       border: 2px solid #0033cc;
     }
 
-    /* ALERTAS SUPERIORES */
+    /* TOP ALERTS */
     #alertaAborto, #alertaDesvio, #alertaRefugio {
       display: none;
       position: fixed;
@@ -296,209 +296,209 @@
     <div style="display:flex; align-items:center; justify-content:space-between; gap:10px;">
       <div>
         <h2 style="margin:0; font-size:1.35rem; letter-spacing:0.5px;">J0-ATLAS</h2>
-        <p class="subtitulo" style="margin:2px 0 0 0;">Sector: Delta Cráter Jezero (Multi-Ruta EVA)</p>
+        <p class="subtitulo" style="margin:2px 0 0 0;">Sector: Jezero Crater Delta (Multi-Route EVA)</p>
       </div>
       <img
         src="simbolo-removebg-preview.png"
-        alt="Logo J0-ATLAS"
+        alt="J0-ATLAS Logo"
         style="height:48px; width:auto; object-fit:contain; flex-shrink:0;"
       >
     </div>
 
-    <div id="estadoSistema">Cargando motor del mapa...</div>
+    <div id="estadoSistema">Loading map engine...</div>
 
-    <!-- SELECTOR DE LAS 3 RUTAS -->
+    <!-- 3-ROUTE SELECTOR -->
     <div class="panel" style="border-color:#38bdf8;">
-      <label style="color:#38bdf8; font-weight:bold; margin-bottom:5px;">Selección de Ruta / Astronauta (Máx. 3):</label>
+      <label style="color:#38bdf8; font-weight:bold; margin-bottom:5px;">Route / Astronaut Selection (Max. 3):</label>
       <div class="selector-rutas">
-        <button type="button" class="btn-ruta activa-r1" id="btnSelRuta1">● Ruta 1 (EVA-1)</button>
-        <button type="button" class="btn-ruta" id="btnSelRuta2">● Ruta 2 (EVA-2)</button>
-        <button type="button" class="btn-ruta" id="btnSelRuta3">● Ruta 3 (EVA-3)</button>
+        <button type="button" class="btn-ruta activa-r1" id="btnSelRuta1">● Route 1 (EVA-1)</button>
+        <button type="button" class="btn-ruta" id="btnSelRuta2">● Route 2 (EVA-2)</button>
+        <button type="button" class="btn-ruta" id="btnSelRuta3">● Route 3 (EVA-3)</button>
       </div>
       <div style="display:flex; gap:6px; margin-top:6px;">
         <button type="button" id="btnBorrarRutaActual" style="background:#475569; font-size:0.75rem; padding:5px;">
-          Borrar Ruta Seleccionada
+          Clear Selected Route
         </button>
       </div>
     </div>
 
-    <!-- TELEMETRÍA INDIVIDUAL DEL ASTRONAUTA DE LA RUTA SELECCIONADA -->
+    <!-- INDIVIDUAL ASTRONAUT TELEMETRY FOR SELECTED ROUTE -->
     <div class="panel" id="panelAstronauta" style="border-color:#22c55e;">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
-        <b id="tituloAstroSeleccionado" style="color:#4ade80;">Datos Astronauta: Ruta 1 (EVA-01)</b>
+        <b id="tituloAstroSeleccionado" style="color:#4ade80;">Astronaut Data: Route 1 (EVA-01)</b>
         <span id="badgeEstadoAstro" style="background:#16a34a; color:#fff; font-size:0.68rem; padding:2px 6px; border-radius:4px; font-weight:bold;">NOMINAL</span>
       </div>
 
       <label for="distanciaRecorrida">
-        Porcentaje de Ruta Completado: <b id="valDistancia" style="color:#38bdf8;">50% (0.00 km)</b>
+        Route Completion Percentage: <b id="valDistancia" style="color:#38bdf8;">50% (0.00 km)</b>
       </label>
       <input type="range" id="distanciaRecorrida" min="0" max="100" value="50">
 
       <label for="simOxigeno">
-        Oxígeno Astronauta (Umbral &lt;30%): <b id="valOxigeno" style="color:#4ade80;">88%</b>
+        Astronaut Oxygen (Threshold &lt;30%): <b id="valOxigeno" style="color:#4ade80;">88%</b>
       </label>
       <input type="range" id="simOxigeno" min="0" max="100" value="88">
 
       <label for="simRecursos">
-        Batería / Energía Traje (Umbral &lt;30%): <b id="valRecursos" style="color:#4ade80;">85%</b>
+        Suit Battery / Power (Threshold &lt;30%): <b id="valRecursos" style="color:#4ade80;">85%</b>
       </label>
       <input type="range" id="simRecursos" min="0" max="100" value="85">
     </div>
 
     <div class="panel" id="infoRuta">
-      Haz clic en dos puntos del mapa para marcar <b>Origen (A)</b> y <b>Destino (B)</b> de la <b>Ruta 1</b>.<br>
-      <small style="color:#9aa5ce;">Haz clic sobre cualquier ruta o astronauta en el mapa para ver sus datos.</small>
+      Click two points on the map to set <b>Origin (A)</b> and <b>Destination (B)</b> for <b>Route 1</b>.<br>
+      <small style="color:#9aa5ce;">Click any route or astronaut on the map to inspect their data.</small>
     </div>
 
-    <!-- DATOS COMPARTIDOS DE LA MISIÓN -->
+    <!-- SHARED MISSION CONDITIONS -->
     <div class="panel" id="panelSensores">
-      <b>Condiciones Globales Compartidas (Sin Satélite):</b>
+      <b>Shared Global Conditions (No Satellite):</b>
 
       <div id="infoConstantesNASA" style="margin:5px 0 7px 0; padding:6px; background:#0f172a; border:1px solid #334155; border-radius:6px; font-size:0.72rem; color:#cbd5e1;">
-        <b style="color:#38bdf8;">Base NASA PDS (Mars 2020 MEDA):</b>
+        <b style="color:#38bdf8;">NASA PDS Baseline (Mars 2020 MEDA):</b>
         ATS: <b>-26.4 °C</b> | TIRS: <b>-11.2 °C</b> | PS: <b>746.8 Pa</b> | WS: <b>19.8 km/h</b> | τ: <b>0.38</b>
       </div>
 
-      <label for="simPolvo">Riesgo Temporal / Polvo Global (&ge;65% Alerta Todas): <span id="valPolvo">18%</span></label>
+      <label for="simPolvo">Global Storm / Dust Risk (&ge;65% Alerts All): <span id="valPolvo">18%</span></label>
       <input type="range" id="simPolvo" min="0" max="100" value="18">
 
-      <label for="simTerreno">Riesgo Terreno / Pendiente: <span id="valTerreno">20%</span></label>
+      <label for="simTerreno">Terrain / Slope Risk: <span id="valTerreno">20%</span></label>
       <input type="range" id="simTerreno" min="0" max="100" value="20">
 
-      <label for="simComms">Señal Comms (Enlace Radio): <span id="valComms">90%</span></label>
+      <label for="simComms">Comms Signal (Radio Link): <span id="valComms">90%</span></label>
       <input type="range" id="simComms" min="0" max="100" value="90">
 
       <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px; margin-top:4px;">
         <div>
-          <label for="capaSelect">Capa Marte</label>
+          <label for="capaSelect">Mars Layer</label>
           <select id="capaSelect">
-            <option value="optico">Óptico (CTX)</option>
-            <option value="topografico">Topográfico</option>
-            <option value="termico">Térmico</option>
-            <option value="geologico">Geológico</option>
+            <option value="optico">Optical (CTX)</option>
+            <option value="topografico">Topographic</option>
+            <option value="termico">Thermal</option>
+            <option value="geologico">Geological</option>
           </select>
         </div>
         <div>
-          <label for="vehiculoSelect">Modo desplazamiento</label>
+          <label for="vehiculoSelect">Travel Mode</label>
           <select id="vehiculoSelect">
-            <option value="andando">Andando (3.5 km/h)</option>
+            <option value="andando">Walking (3.5 km/h)</option>
             <option value="coche">Rover (15 km/h)</option>
-            <option value="dron">Dron (35 km/h)</option>
+            <option value="dron">Drone (35 km/h)</option>
           </select>
         </div>
       </div>
 
       <div style="margin-top:5px;">
-        <label for="climaSelect">Frecuencia tormentas (Datos MEDA)</label>
+        <label for="climaSelect">Storm Frequency (MEDA Data)</label>
         <select id="climaSelect">
-          <option value="0.06|14|0.35">Estación Despejada (Tormenta: 6% | Viento: 14 km/h)</option>
-          <option value="0.32|38|0.95">Temporada Dust Devils (Tormenta: 32% | Viento: 38 km/h)</option>
-          <option value="0.78|68|2.40">Tormenta Regional Polvo (Tormenta: 78% | Viento: 68 km/h)</option>
+          <option value="0.06|14|0.35">Clear Season (Storm: 6% | Wind: 14 km/h)</option>
+          <option value="0.32|38|0.95">Dust Devil Season (Storm: 32% | Wind: 38 km/h)</option>
+          <option value="0.78|68|2.40">Regional Dust Storm (Storm: 78% | Wind: 68 km/h)</option>
         </select>
       </div>
 
       <button type="button" id="btnRestaurarNASA" style="background:#334155; font-size:0.75rem; padding:6px; margin-top:6px;">
-        ↺ Restaurar valores base NASA MEDA
+        ↺ Restore NASA MEDA Baseline
       </button>
     </div>
 
     <div>
-      <button type="button" id="btnPonerRefugios">🏠 Colocar Refugios en el Mapa</button>
+      <button type="button" id="btnPonerRefugios">🏠 Place Shelters on Map</button>
     </div>
 
-    <!-- EDITOR DE BARRANCOS (LÍNEAS ROJAS) Y CÍRCULOS DE TORMENTA -->
+    <!-- HAZARD EDITOR (CANYONS & STORMS) -->
     <div class="panel" style="border-color:#ef4444;">
-      <b style="color:#f87171;">Editor de Peligros (Barrancos y Tormentas):</b>
+      <b style="color:#f87171;">Hazard Editor (Canyons & Storms):</b>
       <div style="display:grid; grid-template-columns: 1.15fr 1fr; gap:6px; margin-top:6px;">
         <button type="button" id="btnModoEditor" style="background:#b91c1c; font-size:0.75rem;">
-          ✏️ Línea Barranco
+          ✏️ Canyon Line
         </button>
         <button type="button" id="btnToggleBarrancos" style="background:#334155; font-size:0.75rem;">
-          👁️ Ocultar Líneas
+          👁️ Hide Lines
         </button>
       </div>
       <button type="button" id="btnModoTormenta" style="background:#d97706; font-size:0.76rem; margin-top:6px;">
-        🌪️ Círculo Tormenta
+        🌪️ Storm Circle
       </button>
 
       <div id="controlesEditor" style="display:none; margin-top:8px;">
-        <small id="instruccionEditor" style="color:#cbd5e1;">Haz clic sobre el mapa siguiendo el borde del barranco:</small>
+        <small id="instruccionEditor" style="color:#cbd5e1;">Click on the map along the canyon edge:</small>
 
         <div id="panelRadioTormenta" style="display:none; margin-top:5px;">
-          <label for="radioTormentaInput">Radio Círculo Tormenta: <span id="valRadioTormenta">2.2 km</span></label>
+          <label for="radioTormentaInput">Storm Circle Radius: <span id="valRadioTormenta">2.2 km</span></label>
           <input type="range" id="radioTormentaInput" min="0.5" max="6.0" step="0.1" value="2.2">
         </div>
 
         <button type="button" id="btnNuevoTramo" style="background:#0284c7; margin-top:5px;">
-          + Guardar tramo de barranco
+          + Save Canyon Segment
         </button>
         <button type="button" id="btnBorrarEditor" style="background:#475569; margin-top:5px;">
-          Borrar barrancos y círculos dibujados
+          Clear Drawn Canyons & Circles
         </button>
-        <label style="margin-top:6px;">Código permanente para app.js:</label>
+        <label style="margin-top:6px;">Permanent code for app.js:</label>
         <textarea id="salidaCodigoBarrancos" rows="3" readonly style="width:100%; background:#0f172a; color:#4ade80; font-family:monospace; font-size:0.72rem; border:1px solid #334155; border-radius:4px; padding:5px;"></textarea>
       </div>
     </div>
 
-    <!-- Panel conectado en tiempo real al feed JSON de NASA JPL (Perseverance) -->
+    <!-- Live NASA JPL JSON Feed Panel -->
     <div class="panel" id="panelNasaLive" style="border-color:#38bdf8;">
       <div style="display:flex; justify-content:space-between; align-items:center;">
-        <b style="color:#38bdf8;">NASA JPL En Vivo (Perseverance):</b>
-        <span id="badgeLiveNasa" style="background:#16a34a; color:#fff; font-size:0.68rem; padding:2px 6px; border-radius:4px; font-weight:bold;">CONECTANDO...</span>
+        <b style="color:#38bdf8;">NASA JPL Live (Perseverance):</b>
+        <span id="badgeLiveNasa" style="background:#16a34a; color:#fff; font-size:0.68rem; padding:2px 6px; border-radius:4px; font-weight:bold;">CONNECTING...</span>
       </div>
       <div id="datosNasaEnVivo" style="margin-top:5px; font-size:0.78rem; color:#e2e8f0;">
-        Consultando servidores de NASA JPL en Jezero...
+        Querying NASA JPL servers in Jezero...
       </div>
       <div style="display:flex; gap:6px; margin-top:6px;">
         <button type="button" id="btnSiguientePaqueteNasa" style="background:#0284c7; font-size:0.74rem; padding:5px;">
-          Siguiente captura POV
+          Next POV Capture
         </button>
         <button type="button" id="btnRefrescarNasaLive" style="background:#334155; font-size:0.74rem; padding:5px;">
-          Sincronizar NASA
+          Sync NASA
         </button>
       </div>
     </div>
 
-    <button type="button" id="btnSimularGPS" style="background:#16a34a;">▶ Iniciar Navegación GPS</button>
-    <button type="button" class="btn-hud" id="btnHud">Activar Modo HUD Casco AR</button>
-    <button type="button" id="btnLimpiar">Reiniciar todas las rutas</button>
+    <button type="button" id="btnSimularGPS" style="background:#16a34a;">▶ Start GPS Navigation</button>
+    <button type="button" class="btn-hud" id="btnHud">Enable AR Helmet HUD</button>
+    <button type="button" id="btnLimpiar">Reset All Routes</button>
   </div>
 
   <div id="map-container">
     <div id="selectorRutasMapa">
-      <button type="button" class="btn-ruta activa-r1" id="btnMapRuta1">● Ruta 1 (EVA-1)</button>
-      <button type="button" class="btn-ruta" id="btnMapRuta2">● Ruta 2 (EVA-2)</button>
-      <button type="button" class="btn-ruta" id="btnMapRuta3">● Ruta 3 (EVA-3)</button>
+      <button type="button" class="btn-ruta activa-r1" id="btnMapRuta1">● Route 1 (EVA-1)</button>
+      <button type="button" class="btn-ruta" id="btnMapRuta2">● Route 2 (EVA-2)</button>
+      <button type="button" class="btn-ruta" id="btnMapRuta3">● Route 3 (EVA-3)</button>
     </div>
 
     <div id="map"></div>
 
     <div id="gps-banner">
-      <div id="gpsInstruccion" style="font-weight:bold; color:#38bdf8;">Calculando rumbo...</div>
-      <div id="gpsSubdato" style="font-size:0.78rem; color:#cbd5e1; margin-top:3px;">Triangulando con balizas locales...</div>
+      <div id="gpsInstruccion" style="font-weight:bold; color:#38bdf8;">Calculating heading...</div>
+      <div id="gpsSubdato" style="font-size:0.78rem; color:#cbd5e1; margin-top:3px;">Triangulating with local beacons...</div>
     </div>
 
     <div id="hud-overlay">
       <div class="hud-top">
         <div class="hud-box" id="hudCajaSuperior">
-          <b>VISOR CASCO EVA-01 // PROYECCIÓN AR</b><br>
-          O2 TRAJE: 88% | BATERÍA: 85% | RAD: 0.64 mSv/d
+          <b>HELMET VISOR EVA-01 // AR PROJECTION</b><br>
+          SUIT O2: 88% | BATTERY: 85% | RAD: 0.64 mSv/d
         </div>
-        <button type="button" class="hud-exit" id="btnSalirHud">Salir de Visor AR</button>
+        <button type="button" class="hud-exit" id="btnSalirHud">Exit AR Visor</button>
       </div>
       <div class="hud-bottom">
         <div class="hud-box" id="hudTelemetria">
-          SISTEMA DE NAVEGACIÓN ACTIVO — Marca Origen (A) y Destino (B)
+          NAVIGATION SYSTEM ACTIVE — Set Origin (A) and Destination (B)
         </div>
         <div class="hud-box">
-          <b>BRAZALETE HOLOGRÁFICO</b><br>
-          Balizas Naranjas: EN LÍNEA | Sin Satélite: OK
+          <b>HOLOGRAPHIC WRISTBAND</b><br>
+          Orange Beacons: ONLINE | No-Sat Nav: OK
         </div>
       </div>
     </div>
   </div>
 
-  <!-- ALERTA ROJA -->
+  <!-- RED ALERT -->
   <div id="alertaAborto">
     <svg viewBox="0 0 100 100" class="icono-peligro">
       <path d="M50 8 L94 88 H6 Z" fill="#ef4444" stroke="#ffffff" stroke-width="4" stroke-linejoin="round" />
@@ -506,12 +506,12 @@
       <circle cx="50" cy="73" r="5" fill="white" />
     </svg>
     <div class="texto-alerta">
-      ¡PELIGRO CRÍTICO EN RUTA!
-      <span id="subtextoAlertaAborto">OXÍGENO O BATERÍA BAJO UMBRAL — EVACUAR A REFUGIO</span>
+      CRITICAL ROUTE HAZARD!
+      <span id="subtextoAlertaAborto">OXYGEN OR BATTERY BELOW THRESHOLD — EVACUATE TO SHELTER</span>
     </div>
   </div>
 
-  <!-- ALERTA AMARILLA -->
+  <!-- YELLOW ALERT -->
   <div id="alertaDesvio">
     <svg viewBox="0 0 100 100" class="icono-desvio">
       <path d="M50 8 L94 88 H6 Z" fill="#cf770c" stroke="#ffffff" stroke-width="4" stroke-linejoin="round" />
@@ -519,12 +519,12 @@
       <circle cx="50" cy="73" r="5" fill="white" />
     </svg>
     <div class="texto-alerta-desvio">
-      ¡ATENCIÓN!
-      <span>RODEO DE BARRANCO / DESVÍO ACTIVO</span>
+      CAUTION!
+      <span>CANYON DETOUR / REROUTING ACTIVE</span>
     </div>
   </div>
 
-  <!-- ALERTA AZUL -->
+  <!-- BLUE ALERT -->
   <div id="alertaRefugio">
     <svg viewBox="0 0 100 100" class="icono-refugio">
       <path d="M50 8 L94 88 H6 Z" fill="#0284c7" stroke="#ffffff" stroke-width="4" stroke-linejoin="round" />
@@ -532,12 +532,12 @@
       <circle cx="50" cy="73" r="5" fill="white" />
     </svg>
     <div class="texto-alerta-refugio">
-      ¡ALERTA METEOROLÓGICA DE TORMENTA!
-      <span>TODAS LAS RUTAS MOSTRANDO ESCAPE DESDE SU POSICIÓN A REFUGIOS</span>
+      DUST STORM WEATHER ALERT!
+      <span>ALL ROUTES SHOWING ESCAPE PATHS TO NEAREST SHELTERS</span>
     </div>
   </div>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="app.js?v=5"></script>
+  <script src="app.js?v=7"></script>
 </body>
 </html>

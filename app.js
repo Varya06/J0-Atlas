@@ -1,5 +1,5 @@
 // =========================================================================
-// 1. INICIALIZACIÓN DEL MAPA DE MARTE (CON tap: false PARA PORTÁTILES)
+// 1. MARS MAP INITIALIZATION (WITH tap: false FOR LAPTOPS)
 // =========================================================================
 const limitesNASA = L.latLngBounds(
   [18.2110274, 77.1604655],
@@ -26,7 +26,7 @@ function actualizarEstado(texto) {
 }
 
 // =========================================================================
-// 1.1. ICONOS VISUALES DE ASTRONAUTA Y REFUGIO MARCIANO
+// 1.1. CUSTOM ASTRONAUT AND MARTIAN SHELTER ICONS
 // =========================================================================
 function crearIconoAstronauta(ruta, esCritico, esSeleccionada) {
   const colorFondo = esCritico ? '#ef4444' : ruta.color;
@@ -59,7 +59,7 @@ function crearIconoAstronauta(ruta, esCritico, esSeleccionada) {
 }
 
 function crearIconoRefugio(idRefugio) {
-  const etiqueta = idRefugio === 'BASE' ? 'BASE' : `REFUGIO ${idRefugio}`;
+  const etiqueta = idRefugio === 'BASE' ? 'BASE' : `SHELTER ${idRefugio}`;
 
   const html = `
     <div class="refugio-marker-wrap">
@@ -88,7 +88,7 @@ function crearIconoRefugio(idRefugio) {
 }
 
 // =========================================================================
-// 2. CONEXIÓN CON NASA MARS TREK WMTS
+// 2. NASA MARS TREK WMTS CONNECTION
 // =========================================================================
 const urlsCapasWMTS = {
   optico:
@@ -118,7 +118,7 @@ let capaBaseNASA = crearCapaWMTS(urlsCapasWMTS.optico).addTo(map);
 
 map.whenReady(() => {
   requestAnimationFrame(() => map.invalidateSize());
-  actualizarEstado('Ruta 1 activa: haz clic en el mapa para marcar Origen (A)');
+  actualizarEstado('Route 1 active: click on the map to set Origin (A)');
 });
 
 document.getElementById('capaSelect')?.addEventListener('change', (e) => {
@@ -141,7 +141,7 @@ document.getElementById('capaSelect')?.addEventListener('change', (e) => {
 });
 
 // =========================================================================
-// 3. CÍRCULO ZONA BASE Y LOS 6 PUNTOS SEGUROS NARANJAS (CALIBRADOS)
+// 3. BASE ZONE CIRCLE & 6 CALIBRATED ORANGE SAFE BEACONS
 // =========================================================================
 L.circle([18.4466, 77.4998], {
   radius: 8800,
@@ -153,12 +153,12 @@ L.circle([18.4466, 77.4998], {
 }).addTo(map);
 
 const puntosSegurosNaranja = [
-  { id: 'S1', nombre: 'Western Inflow Channel', coords: [18.57531, 77.20410], recursos: 'Repetidor UHF en curva del cañón + Refugio térmico' },
-  { id: 'S2', nombre: 'Western Breach', coords: [18.4930, 77.3030], recursos: 'Depósito O2 auxiliar + Baliza boca del río' },
-  { id: 'S3', nombre: 'Western Delta Deposit', coords: [18.51022, 77.40511], recursos: 'Estación meteo local MEDA + Baterías (oeste del cráter)' },
-  { id: 'S4', nombre: 'Perseverance Landing Ellipse', coords: [18.44658, 77.49979], recursos: 'Hábitat principal / Soporte vital completo' },
-  { id: 'S5', nombre: 'Jezero Crater', coords: [18.39735, 77.69435], recursos: 'Repetidor largo alcance en borde norte + Refugio' },
-  { id: 'S6', nombre: 'Northern Delta Deposit', coords: [18.62839, 77.54596], recursos: 'Depósito suministros + Baliza oriental' }
+  { id: 'S1', nombre: 'Western Inflow Channel', coords: [18.57531, 77.20410], recursos: 'UHF repeater at canyon bend + Thermal shelter' },
+  { id: 'S2', nombre: 'Western Breach', coords: [18.4930, 77.3030], recursos: 'Auxiliary O2 cache + River mouth beacon' },
+  { id: 'S3', nombre: 'Western Delta Deposit', coords: [18.51022, 77.40511], recursos: 'Local MEDA weather station + Battery pack' },
+  { id: 'S4', nombre: 'Perseverance Landing Ellipse', coords: [18.44658, 77.49979], recursos: 'Primary Habitat / Full life support' },
+  { id: 'S5', nombre: 'Jezero Crater', coords: [18.39735, 77.69435], recursos: 'Long-range rim repeater + Emergency shelter' },
+  { id: 'S6', nombre: 'Northern Delta Deposit', coords: [18.62839, 77.54596], recursos: 'Supply depot + Eastern navigation beacon' }
 ];
 
 const marcadoresPuntosSeguros = {};
@@ -174,7 +174,7 @@ puntosSegurosNaranja.forEach((p) => {
     .addTo(map)
     .bindPopup(
       `<div style="color:#111; max-width:240px;">` +
-      `<b>Punto Seguro [${p.id}]: ${p.nombre}</b><br>` +
+      `<b>Safe Beacon [${p.id}]: ${p.nombre}</b><br>` +
       `<small>${p.recursos}</small><br>` +
       `<small style="color:#555;">Lat: ${p.coords[0].toFixed(4)}° | Lon: ${p.coords[1].toFixed(4)}°</small>` +
       `</div>`
@@ -184,7 +184,7 @@ puntosSegurosNaranja.forEach((p) => {
 });
 
 // =========================================================================
-// 4. CONSTANTES NASA PDS (MEDA) Y FÓRMULA MATEMÁTICA DE TEMPORAL Y RIESGOS
+// 4. NASA PDS (MEDA) CONSTANTS & STORM / RISK FORMULA
 // =========================================================================
 const DATOS_BASE_NASA_MEDA = {
   marsYear: 36,
@@ -269,9 +269,9 @@ function obtenerPuntoEnPorcentaje(puntosCamino, porcentaje) {
 }
 
 const modosTransporte = {
-  andando: { nombre: 'Andando (EVA)', velocidadKmH: 3.5, sensTemporal: 0.45, sensTerreno: 0.25, tasaO2Min: 0.38 },
-  coche:   { nombre: 'En Coche (Rover)', velocidadKmH: 15.0, sensTemporal: 0.20, sensTerreno: 0.55, tasaO2Min: 0.14 },
-  dron:    { nombre: 'Con Dron (Rotor)', velocidadKmH: 35.0, sensTemporal: 0.85, sensTerreno: 0.00, tasaO2Min: 0.08 }
+  andando: { nombre: 'Walking (EVA)', velocidadKmH: 3.5, sensTemporal: 0.45, sensTerreno: 0.25, tasaO2Min: 0.38 },
+  coche:   { nombre: 'Rover', velocidadKmH: 15.0, sensTemporal: 0.20, sensTerreno: 0.55, tasaO2Min: 0.14 },
+  dron:    { nombre: 'Drone (Rotor)', velocidadKmH: 35.0, sensTemporal: 0.85, sensTerreno: 0.00, tasaO2Min: 0.08 }
 };
 
 function calcularRiesgoTerrenoRuta(p1, p2) {
@@ -307,13 +307,13 @@ function colorPorProbabilidad(pct) {
 }
 
 // =========================================================================
-// 5. ESTRUCTURA DE LAS 3 RUTAS Y SUS ASTRONAUTAS INDEPENDIENTES
+// 5. 3 INDEPENDENT ROUTES & ASTRONAUT PROFILES
 // =========================================================================
 const rutas = [
   {
     id: 1,
     codigo: 'EVA-01',
-    nombre: 'Ruta 1 (EVA-01)',
+    nombre: 'Route 1 (EVA-01)',
     color: '#22c55e',
     claseBtn: 'activa-r1',
     puntosClick: [],
@@ -334,7 +334,7 @@ const rutas = [
   {
     id: 2,
     codigo: 'EVA-02',
-    nombre: 'Ruta 2 (EVA-02)',
+    nombre: 'Route 2 (EVA-02)',
     color: '#a855f7',
     claseBtn: 'activa-r2',
     puntosClick: [],
@@ -355,7 +355,7 @@ const rutas = [
   {
     id: 3,
     codigo: 'EVA-03',
-    nombre: 'Ruta 3 (EVA-03)',
+    nombre: 'Route 3 (EVA-03)',
     color: '#eab308',
     claseBtn: 'activa-r3',
     puntosClick: [],
@@ -378,7 +378,7 @@ const rutas = [
 let rutaActivaIdx = 0;
 
 // =========================================================================
-// 6. BARRANCOS (CON TOGGLE DE VISIBILIDAD), CÍRCULOS DE TORMENTA Y MOTOR A*
+// 6. CANYONS (WITH VISIBILITY TOGGLE), STORM CIRCLES & A* ENGINE
 // =========================================================================
 let barrancosLineas = [];
 let tormentasCirculos = [];
@@ -476,7 +476,7 @@ function segmentoCortaBarranco(p1, p2) {
       const q1 = { lat: b.tramo[i][0], lng: b.tramo[i][1] };
       const q2 = { lat: b.tramo[i + 1][0], lng: b.tramo[i + 1][1] };
       if (seCruzanSegmentos(p1, p2, q1, q2)) {
-        return b.nombre || 'Barranco';
+        return b.nombre || 'Canyon';
       }
     }
   }
@@ -486,7 +486,7 @@ function segmentoCortaBarranco(p1, p2) {
 function segmentoCortaTormenta(p1, p2) {
   for (const t of tormentasCirculos) {
     if (segmentoTocaCirculoMarte(p1, p2, t.centro, t.radioKm)) {
-      return t.nombre || 'Círculo de Tormenta';
+      return t.nombre || 'Storm Circle';
     }
   }
   return null;
@@ -653,11 +653,11 @@ function calcularRutaConAStar(origen, destino, modo) {
 }
 
 // =========================================================================
-// 7. GESTIÓN DE REFUGIOS Y COMPARATIVA DE LOS 2 MÁS CERCANOS
+// 7. SHELTER MANAGEMENT & TOP 2 NEAREST SHELTERS COMPARISON
 // =========================================================================
 function obtenerListaRefugiosDisponibles() {
   const azules = refugiosColocados.map((r) => ({
-    id: r.id === 'BASE' ? 'BASE' : 'Refugio ' + r.id,
+    id: r.id === 'BASE' ? 'BASE' : 'Shelter ' + r.id,
     codigoCorto: r.id,
     lat: r.lat,
     lng: r.lng,
@@ -667,7 +667,7 @@ function obtenerListaRefugiosDisponibles() {
   if (azules.length >= 2) return azules;
 
   const naranjas = puntosSegurosNaranja.map((p) => ({
-    id: `Baliza ${p.id}`,
+    id: `Beacon ${p.id}`,
     codigoCorto: p.id,
     lat: p.coords[0],
     lng: p.coords[1],
@@ -761,7 +761,7 @@ function seleccionarRuta(idx) {
 
   const titulo = document.getElementById('tituloAstroSeleccionado');
   if (titulo) {
-    titulo.textContent = `Datos Astronauta: ${r.nombre}`;
+    titulo.textContent = `Astronaut Data: ${r.nombre}`;
     titulo.style.color = r.color;
   }
 
@@ -774,16 +774,16 @@ function seleccionarRuta(idx) {
   if (sliderBat) sliderBat.value = r.bateria;
 
   if (r.puntosClick.length < 2) {
-    actualizarEstado(`${r.nombre} seleccionada — Haz clic en el mapa para marcar Origen (A) y Destino (B)`);
+    actualizarEstado(`${r.nombre} selected — Click on the map to set Origin (A) and Destination (B)`);
   } else {
-    actualizarEstado(`${r.nombre} seleccionada (${r.progresoPct}% completado)`);
+    actualizarEstado(`${r.nombre} selected (${r.progresoPct}% completed)`);
   }
 
   recalcularTodasLasRutas();
 }
 
 // =========================================================================
-// 8. RECÁLCULO Y DIBUJADO DE LAS 3 RUTAS Y SOLO LOS 2 REFUGIOS MÁS CERCANOS
+// 8. RECALCULATE & RENDER ALL 3 ROUTES + TOP 2 NEAREST SHELTERS
 // =========================================================================
 function recalcularTodasLasRutas() {
   const polvoGlobal = Number(document.getElementById('simPolvo')?.value ?? 18);
@@ -874,13 +874,13 @@ function recalcularTodasLasRutas() {
     const kmRecorridosR = distTotalR * (r.progresoPct / 100);
     const comp = r.comparativaTop2;
 
-    let htmlPopupComp = `<small style="color:#475569;">Haz clic para editar este astronauta en el panel.</small>`;
+    let htmlPopupComp = `<small style="color:#475569;">Click to edit this astronaut in the sidebar.</small>`;
     if (comp && comp.mejor) {
       htmlPopupComp =
         `<div style="margin-top:6px; padding:6px; background:#f0fdf4; border:1px solid #22c55e; border-radius:5px; font-size:0.76rem;">` +
-        `<b style="color:#15803d;">🏆 Mejor Escape: ${comp.mejor.id}</b> (${comp.mejor.minutos} min | -${comp.mejor.consumoO2Pct}% O2 | ${comp.mejor.exitoPct}% éxito)<br>` +
+        `<b style="color:#15803d;">🏆 Best Escape: ${comp.mejor.id}</b> (${comp.mejor.minutos} min | -${comp.mejor.consumoO2Pct}% O2 | ${comp.mejor.exitoPct}% success)<br>` +
         (comp.segundo
-          ? `<span style="color:#475569;">Vs 2º (${comp.segundo.id}): <b>Ahorra ${comp.ahorroMinutos} min</b>, <b>${comp.ahorroOxigeno}% O2</b> y <b>+${comp.mejoraExito}% éxito</b>.</span>`
+          ? `<span style="color:#475569;">Vs 2nd (${comp.segundo.id}): <b>Saves ${comp.ahorroMinutos} min</b>, <b>${comp.ahorroOxigeno}% O2</b> and <b>+${comp.mejoraExito}% success</b>.</span>`
           : '') +
         `</div>`;
     }
@@ -888,9 +888,9 @@ function recalcularTodasLasRutas() {
     r.marcadorAstro.bindPopup(
       `<div style="color:#111; min-width:235px;">` +
       `<b style="color:#0f172a;">👨‍🚀 ${r.nombre}</b><br>` +
-      `• Completado: <b>${r.progresoPct}%</b> (${kmRecorridosR.toFixed(2)} / ${distTotalR.toFixed(2)} km)<br>` +
-      `• Oxígeno: <b style="color:${r.oxigeno < 30 ? '#dc2626' : '#16a34a'};">${r.oxigeno}%</b> | ` +
-      `Batería: <b style="color:${r.bateria < 30 ? '#dc2626' : '#16a34a'};">${r.bateria}%</b>` +
+      `• Completed: <b>${r.progresoPct}%</b> (${kmRecorridosR.toFixed(2)} / ${distTotalR.toFixed(2)} km)<br>` +
+      `• Oxygen: <b style="color:${r.oxigeno < 30 ? '#dc2626' : '#16a34a'};">${r.oxigeno}%</b> | ` +
+      `Battery: <b style="color:${r.bateria < 30 ? '#dc2626' : '#16a34a'};">${r.bateria}%</b>` +
       htmlPopupComp +
       `</div>`
     );
@@ -937,10 +937,10 @@ function actualizarPanelYAlertasRutaSeleccionada() {
   const badgeAstro = document.getElementById('badgeEstadoAstro');
   if (badgeAstro) {
     if (faltaVital) {
-      badgeAstro.textContent = 'CRÍTICO (<30%)';
+      badgeAstro.textContent = 'CRITICAL (<30%)';
       badgeAstro.style.background = '#dc2626';
     } else if (polvoGlobal >= 65 || r.tocaCirculoTormenta) {
-      badgeAstro.textContent = 'ALERTA TORMENTA';
+      badgeAstro.textContent = 'STORM ALERT';
       badgeAstro.style.background = '#0284c7';
     } else {
       badgeAstro.textContent = 'NOMINAL';
@@ -958,9 +958,9 @@ function actualizarPanelYAlertasRutaSeleccionada() {
 
   if (r.puntosClick.length < 2) {
     document.getElementById('infoRuta').innerHTML =
-      `<b>${r.nombre}</b> seleccionada.<br>` +
-      `Haz clic en dos puntos del mapa para marcar <b>Origen (A)</b> y <b>Destino (B)</b>.<br>` +
-      `<small style="color:#9aa5ce;">Puedes configurar hasta 3 rutas simultáneas con sus astronautas.</small>`;
+      `<b>${r.nombre}</b> selected.<br>` +
+      `Click two points on the map to set <b>Origin (A)</b> and <b>Destination (B)</b>.<br>` +
+      `<small style="color:#9aa5ce;">You can configure up to 3 simultaneous EVA routes.</small>`;
     return;
   }
 
@@ -974,9 +974,9 @@ function actualizarPanelYAlertasRutaSeleccionada() {
 
   const minRestantes = Math.round((kmRestantes / modosTransporte[modoElegido].velocidadKmH) * 60);
 
-  let orden = 'CONTINUAR RUTA PREVISTA';
+  let orden = 'CONTINUE PLANNED ROUTE';
   let colorOrden = '#4ade80';
-  let explicacion = `Astronauta al <b>${r.progresoPct}%</b> del recorrido. Faltan <b>${kmRestantes.toFixed(2)} km</b> (${minRestantes} min).`;
+  let explicacion = `Astronaut at <b>${r.progresoPct}%</b> of route. <b>${kmRestantes.toFixed(2)} km</b> remaining (${minRestantes} min).`;
   let bloqueComparativaHTML = '';
 
   const comp = r.comparativaTop2;
@@ -984,61 +984,61 @@ function actualizarPanelYAlertasRutaSeleccionada() {
   if (comp && comp.mejor) {
     bloqueComparativaHTML =
       `<div style="margin-top:7px; padding:7px; border-radius:6px; background:rgba(2, 132, 199, 0.16); border:1px solid #38bdf8; font-size:0.76rem;">` +
-      `<b style="color:#38bdf8;">📊 Comparativa 2 Refugios Más Cercanos:</b><br>` +
+      `<b style="color:#38bdf8;">📊 Top 2 Nearest Shelters Comparison:</b><br>` +
       `<div style="margin-top:4px; color:#86efac;">` +
-      `<b>1º Mejor (${comp.mejor.id}):</b> ${comp.mejor.distKm.toFixed(2)} km • <b>${comp.mejor.minutos} min</b> • Consumo O2: <b>${comp.mejor.consumoO2Pct}%</b> • Éxito: <b>${comp.mejor.exitoPct}%</b>` +
+      `<b>1st Best (${comp.mejor.id}):</b> ${comp.mejor.distKm.toFixed(2)} km • <b>${comp.mejor.minutos} min</b> • O2 Cost: <b>${comp.mejor.consumoO2Pct}%</b> • Success: <b>${comp.mejor.exitoPct}%</b>` +
       `</div>` +
       (comp.segundo
         ? `<div style="margin-top:2px; color:#fde047;">` +
-          `<b>2º Alternativa (${comp.segundo.id}):</b> ${comp.segundo.distKm.toFixed(2)} km • ${comp.segundo.minutos} min • Consumo O2: ${comp.segundo.consumoO2Pct}% • Éxito: ${comp.segundo.exitoPct}%` +
+          `<b>2nd Alternative (${comp.segundo.id}):</b> ${comp.segundo.distKm.toFixed(2)} km • ${comp.segundo.minutos} min • O2 Cost: ${comp.segundo.consumoO2Pct}% • Success: ${comp.segundo.exitoPct}%` +
           `</div>` +
           `<div style="margin-top:5px; padding:5px; background:rgba(22, 163, 74, 0.25); border-radius:4px; color:#ffffff;">` +
-          `✅ <b>${comp.mejor.id} es mejor</b> porque <b>ahorra ${comp.ahorroMinutos} min</b>, <b>${comp.ahorroOxigeno}% de oxígeno</b> y tienes un <b>+${comp.mejoraExito}% más de probabilidades de éxito</b>.` +
+          `✅ <b>${comp.mejor.id} is better</b> because it <b>saves ${comp.ahorroMinutos} min</b>, <b>${comp.ahorroOxigeno}% oxygen</b>, and gives a <b>+${comp.mejoraExito}% higher probability of success</b>.` +
           `</div>`
         : '') +
-      `<button type="button" style="margin-top:6px; background:#334155; color:#e2e8f0; border:1px solid #64748b; padding:5px 8px; border-radius:5px; font-size:0.74rem; width:100%; cursor:pointer;">Elegir otra opción</button>` +
+      `<button type="button" style="margin-top:6px; background:#334155; color:#e2e8f0; border:1px solid #64748b; padding:5px 8px; border-radius:5px; font-size:0.74rem; width:100%; cursor:pointer;">Choose another option</button>` +
       `</div>`;
   }
 
   if (r.sinSalida) {
     alertaAborto?.classList.add('activa');
-    orden = 'PASO BLOQUEADO POR BARRANCOS / TORMENTA';
+    orden = 'PATH BLOCKED BY CANYONS / STORM';
     colorOrden = '#ef4444';
-    explicacion = 'Las barreras cierran completamente el paso terrestre.';
+    explicacion = 'Hazards completely block ground passage.';
   } else if (faltaVital || commsGlobal < 25) {
     alertaAborto?.classList.add('activa');
     colorOrden = '#ef4444';
     const subtexto = document.getElementById('subtextoAlertaAborto');
     if (subtexto) {
-      subtexto.textContent = `${r.nombre}: O2 (${r.oxigeno}%) / BATERÍA (${r.bateria}%) — COMPARANDO TOP 2 REFUGIOS`;
+      subtexto.textContent = `${r.nombre}: O2 (${r.oxigeno}%) / BATTERY (${r.bateria}%) — COMPARING TOP 2 SHELTERS`;
     }
     if (comp && comp.mejor) {
-      orden = `EVACUAR AHORA → ${comp.mejor.id} (${comp.mejor.minutos} min)`;
-      explicacion = `Nivel vital crítico en <b>${r.codigo}</b> (O2: ${r.oxigeno}%, Bat: ${r.bateria}%). Calculadas las 2 mejores rutas de escape desde el punto actual (${r.progresoPct}%).`;
+      orden = `EVACUATE NOW → ${comp.mejor.id} (${comp.mejor.minutos} min)`;
+      explicacion = `Critical life-support level on <b>${r.codigo}</b> (O2: ${r.oxigeno}%, Bat: ${r.bateria}%). Top 2 escape routes calculated from current position (${r.progresoPct}%).`;
     }
   } else if (polvoGlobal >= 65 || r.tocaCirculoTormenta) {
     alertaRefugio?.classList.add('activa');
     colorOrden = '#38bdf8';
     if (comp && comp.mejor) {
-      orden = `TORMENTA ACTIVA → ${comp.mejor.id} (${comp.mejor.minutos} min)`;
-      explicacion = `Alerta meteorológica (${polvoGlobal}%). <b>Todas las rutas</b> muestran sus 2 refugios más cercanos desde la posición actual de cada astronauta.`;
+      orden = `STORM ACTIVE → ${comp.mejor.id} (${comp.mejor.minutos} min)`;
+      explicacion = `Weather alert (${polvoGlobal}%). <b>All routes</b> display their 2 nearest shelters from each astronaut's current position.`;
     }
   } else if (r.rodeoAplicado || terrenoGlobal >= 60 || polvoGlobal >= 45) {
     alertaDesvio?.classList.add('activa');
-    orden = r.rodeoAplicado ? 'RODEO DE BARRANCO ACTIVO' : 'PRECAUCIÓN EN TRAMO';
+    orden = r.rodeoAplicado ? 'CANYON DETOUR ACTIVE' : 'SEGMENT CAUTION';
     colorOrden = '#facc15';
     explicacion = r.rodeoAplicado
-      ? `Ruta desviada automáticamente bordeando <b>${r.barrancoEvitado}</b>.`
-      : `Riesgo moderado en sensores locales. Mantener vigilancia.`;
+      ? `Route automatically rerouted around <b>${r.barrancoEvitado}</b>.`
+      : `Moderate local sensor risk. Maintain caution.`;
   }
 
   document.getElementById('infoRuta').innerHTML =
-    `<b style="color:${r.color};">${r.nombre}:</b> ${distTotal.toFixed(2)} km totales | <b>Restante:</b> ${kmRestantes.toFixed(2)} km (${minRestantes} min)<br>` +
-    `<b>Éxito:</b> Andando <b style="color:${colorPorProbabilidad(pAndando)}">${pAndando}%</b> | ` +
-    `Coche <b style="color:${colorPorProbabilidad(pCoche)}">${pCoche}%</b> | ` +
-    `Dron <b style="color:${colorPorProbabilidad(pDron)}">${pDron}%</b>` +
+    `<b style="color:${r.color};">${r.nombre}:</b> ${distTotal.toFixed(2)} km total | <b>Remaining:</b> ${kmRestantes.toFixed(2)} km (${minRestantes} min)<br>` +
+    `<b>Success:</b> Walking <b style="color:${colorPorProbabilidad(pAndando)}">${pAndando}%</b> | ` +
+    `Rover <b style="color:${colorPorProbabilidad(pCoche)}">${pCoche}%</b> | ` +
+    `Drone <b style="color:${colorPorProbabilidad(pDron)}">${pDron}%</b>` +
     `<div style="margin-top:6px; padding:7px; border-radius:6px; background:rgba(15,23,42,0.9); border:1px solid ${colorOrden};">` +
-    `<div style="color:${colorOrden}; font-weight:bold;">ORDEN (${r.codigo}): ${orden}</div>` +
+    `<div style="color:${colorOrden}; font-weight:bold;">ORDER (${r.codigo}): ${orden}</div>` +
     `<div style="font-size:0.78rem; color:#e2e8f0; margin-top:3px;">${explicacion}</div>` +
     bloqueComparativaHTML +
     `</div>`;
@@ -1046,21 +1046,21 @@ function actualizarPanelYAlertasRutaSeleccionada() {
   const hudCajaSup = document.getElementById('hudCajaSuperior');
   if (hudCajaSup) {
     hudCajaSup.innerHTML =
-      `<b>VISOR CASCO ${r.codigo} // PROYECCIÓN AR (${r.progresoPct}%)</b><br>` +
-      `O2 TRAJE: ${r.oxigeno}% | BATERÍA: ${r.bateria}% | RAD: 0.64 mSv/d`;
+      `<b>HELMET VISOR ${r.codigo} // AR PROJECTION (${r.progresoPct}%)</b><br>` +
+      `SUIT O2: ${r.oxigeno}% | BATTERY: ${r.bateria}% | RAD: 0.64 mSv/d`;
   }
 
   const hudEl = document.getElementById('hudTelemetria');
   if (hudEl) {
     const refTxt = comp && comp.mejor
-      ? `${comp.mejor.id} (Ahorra ${comp.ahorroMinutos}m, ${comp.ahorroOxigeno}% O2, +${comp.mejoraExito}% éxito)`
-      : 'EN LÍNEA';
-    hudEl.innerHTML = `<span style="color:${colorOrden};font-weight:bold;">${r.codigo}: ${orden}</span> | MEJOR: ${refTxt}`;
+      ? `${comp.mejor.id} (Saves ${comp.ahorroMinutos}m, ${comp.ahorroOxigeno}% O2, +${comp.mejoraExito}% success)`
+      : 'ONLINE';
+    hudEl.innerHTML = `<span style="color:${colorOrden};font-weight:bold;">${r.codigo}: ${orden}</span> | BEST: ${refTxt}`;
   }
 }
 
 // =========================================================================
-// 9. CLIC EN EL MAPA (REFUGIOS CON BASE PRIMERO, BARRANCOS, TORMENTAS O RUTAS)
+// 9. MAP CLICK HANDLER (BASE + SHELTERS, CANYONS, STORMS, OR 3 ROUTES)
 // =========================================================================
 map.on('click', (e) => {
   if (modoColocarRefugios) {
@@ -1075,15 +1075,15 @@ map.on('click', (e) => {
 
     refugiosColocados.push({ id: idRefugio, lat, lng, marcador: marcadorRefugio });
 
-    const tituloPopup = idRefugio === 'BASE' ? 'BASE PRINCIPAL' : `Refugio Presurizado ${idRefugio}`;
+    const tituloPopup = idRefugio === 'BASE' ? 'MAIN BASE' : `Pressurized Shelter ${idRefugio}`;
 
     marcadorRefugio.bindPopup(
       `<div style="color:#111;"><b>🏠 ${tituloPopup}</b><br>` +
-      `<small>Soporte vital, O2 y recarga de traje activos</small><br>` +
+      `<small>Life support, O2 and suit charging active</small><br>` +
       `<small style="color:#555;">Lat: ${lat.toFixed(5)}° | Lon: ${lng.toFixed(5)}°</small></div>`
     ).openPopup();
 
-    actualizarEstado(`${idRefugio === 'BASE' ? 'BASE' : 'Refugio ' + idRefugio} colocada — Comparativa Top 2 actualizada`);
+    actualizarEstado(`${idRefugio === 'BASE' ? 'BASE' : 'Shelter ' + idRefugio} placed — Top 2 comparison updated`);
     contadorRefugios++;
     recalcularTodasLasRutas();
     return;
@@ -1092,12 +1092,12 @@ map.on('click', (e) => {
   if (modoEditorTormenta) {
     const radioKm = Number(document.getElementById('radioTormentaInput')?.value ?? 2.2);
     tormentasCirculos.push({
-      nombre: 'Tormenta #' + (tormentasCirculos.length + 1),
+      nombre: 'Storm #' + (tormentasCirculos.length + 1),
       centro: [Number(e.latlng.lat.toFixed(5)), Number(e.latlng.lng.toFixed(5))],
       radioKm: radioKm
     });
     actualizarVistaYCodigoPeligros();
-    actualizarEstado(`Círculo de Tormenta (${radioKm} km) guardado en el mapa`);
+    actualizarEstado(`Storm Circle (${radioKm} km) saved on map`);
     return;
   }
 
@@ -1105,13 +1105,13 @@ map.on('click', (e) => {
     tramoEnCurso.push([Number(e.latlng.lat.toFixed(5)), Number(e.latlng.lng.toFixed(5))]);
     if (lineaPreviaEditor) map.removeLayer(lineaPreviaEditor);
     lineaPreviaEditor = L.polyline(tramoEnCurso, { color: '#f87171', weight: 5, dashArray: '4, 4', interactive: false }).addTo(map);
-    actualizarEstado(`Dibujando barranco (${tramoEnCurso.length} puntos marcados)`);
+    actualizarEstado(`Drawing canyon (${tramoEnCurso.length} points marked)`);
     return;
   }
 
   const r = rutas[rutaActivaIdx];
   if (r.puntosClick.length >= 2) {
-    actualizarEstado(`${r.nombre} ya tiene A y B. Usa "Borrar Ruta Seleccionada" o cambia a otra Ruta.`);
+    actualizarEstado(`${r.nombre} already has A & B. Use "Clear Selected Route" or switch routes.`);
     return;
   }
 
@@ -1127,22 +1127,22 @@ map.on('click', (e) => {
   })
     .addTo(map)
     .bindPopup(
-      `<div style="color:#111;"><b>${r.nombre} — ${esOrigen ? 'Origen (A)' : 'Destino (B)'}</b><br>` +
+      `<div style="color:#111;"><b>${r.nombre} — ${esOrigen ? 'Origin (A)' : 'Destination (B)'}</b><br>` +
       `Lat: ${e.latlng.lat.toFixed(5)}°<br>Lon: ${e.latlng.lng.toFixed(5)}°</div>`
     );
 
   r.marcadoresAB.push(marcador);
 
   if (esOrigen) {
-    actualizarEstado(`${r.nombre}: Origen (A) fijado — Haz clic para marcar Destino (B)`);
+    actualizarEstado(`${r.nombre}: Origin (A) set — Click to mark Destination (B)`);
   } else {
-    actualizarEstado(`${r.nombre} trazada en el mapa`);
+    actualizarEstado(`${r.nombre} plotted on map`);
     recalcularTodasLasRutas();
   }
 });
 
 // =========================================================================
-// 10. EVENTOS DE SLIDERS, SELECTORES DE RUTA Y BOTONES DEL EDITOR
+// 10. SLIDER, ROUTE SELECTOR & EDITOR BUTTON EVENTS
 // =========================================================================
 [1, 2, 3].forEach((num, idx) => {
   document.getElementById('btnSelRuta' + num)?.addEventListener('click', () => seleccionarRuta(idx));
@@ -1202,7 +1202,7 @@ document.getElementById('btnBorrarRutaActual')?.addEventListener('click', () => 
   r.comparativaTop2 = null;
 
   recalcularTodasLasRutas();
-  actualizarEstado(`${r.nombre} borrada — Haz clic en el mapa para nuevo Origen (A)`);
+  actualizarEstado(`${r.nombre} cleared — Click on map for new Origin (A)`);
 });
 
 document.getElementById('btnPonerRefugios')?.addEventListener('click', (e) => {
@@ -1217,14 +1217,14 @@ document.getElementById('btnPonerRefugios')?.addEventListener('click', (e) => {
   const boton = document.getElementById('btnPonerRefugios');
   if (modoColocarRefugios) {
     mapa.style.cursor = 'crosshair';
-    boton.textContent = '✅ Salir del modo refugios';
+    boton.textContent = '✅ Exit Shelter Mode';
     boton.classList.add('activo');
-    actualizarEstado('Modo Refugios: haz clic en el mapa para colocar hábitats');
+    actualizarEstado('Shelter Mode: click on map to place habitats');
   } else {
     mapa.style.cursor = '';
-    boton.textContent = '🏠 Colocar Refugios en el Mapa';
+    boton.textContent = '🏠 Place Shelters on Map';
     boton.classList.remove('activo');
-    actualizarEstado('Modo Ruta activo');
+    actualizarEstado('Route Mode active');
   }
 });
 
@@ -1232,14 +1232,14 @@ document.getElementById('btnToggleBarrancos')?.addEventListener('click', () => {
   barrancosVisibles = !barrancosVisibles;
   const btn = document.getElementById('btnToggleBarrancos');
   if (btn) {
-    btn.textContent = barrancosVisibles ? '👁️ Ocultar Líneas' : '🙈 Mostrar Líneas';
+    btn.textContent = barrancosVisibles ? '👁️ Hide Lines' : '🙈 Show Lines';
     btn.style.background = barrancosVisibles ? '#334155' : '#0f766e';
   }
   actualizarVistaYCodigoPeligros();
   actualizarEstado(
     barrancosVisibles
-      ? 'Líneas rojas de barrancos visibles en pantalla'
-      : 'Líneas rojas ocultas visualmente (siguen activas para rodeos)'
+      ? 'Red canyon lines visible on screen'
+      : 'Red lines hidden visually (still active for routing)'
   );
 });
 
@@ -1251,10 +1251,10 @@ function actualizarBotonesEditorUI() {
   const btnGuardarTramo = document.getElementById('btnNuevoTramo');
   const inst = document.getElementById('instruccionEditor');
 
-  btnB.textContent = modoEditorBarranco ? '✅ Salir Línea' : '✏️ Línea Barranco';
+  btnB.textContent = modoEditorBarranco ? '✅ Exit Line' : '✏️ Canyon Line';
   btnB.style.background = modoEditorBarranco ? '#15803d' : '#b91c1c';
 
-  btnT.textContent = modoEditorTormenta ? '✅ Salir Círculo' : '🌪️ Círculo Tormenta';
+  btnT.textContent = modoEditorTormenta ? '✅ Exit Circle' : '🌪️ Storm Circle';
   btnT.style.background = modoEditorTormenta ? '#15803d' : '#d97706';
 
   if (modoEditorBarranco || modoEditorTormenta) {
@@ -1262,8 +1262,8 @@ function actualizarBotonesEditorUI() {
     panelRadio.style.display = modoEditorTormenta ? 'block' : 'none';
     btnGuardarTramo.style.display = modoEditorBarranco ? 'block' : 'none';
     inst.textContent = modoEditorTormenta
-      ? 'Elige el radio y haz clic en el mapa para colocar un Círculo de Tormenta:'
-      : 'Haz clic en varios puntos del mapa para trazar la línea roja del barranco:';
+      ? 'Choose radius and click on the map to place a Storm Circle:'
+      : 'Click multiple points on the map to draw the red canyon line:';
   } else {
     panel.style.display = 'none';
   }
@@ -1293,11 +1293,11 @@ document.getElementById('radioTormentaInput')?.addEventListener('input', (e) => 
 
 document.getElementById('btnNuevoTramo')?.addEventListener('click', () => {
   if (tramoEnCurso.length < 2) {
-    alert('Haz clic al menos en 2 puntos del mapa para formar una línea de barranco.');
+    alert('Click at least 2 points on the map to form a canyon segment.');
     return;
   }
   barrancosLineas.push({
-    nombre: 'Barranco Jezero #' + (barrancosLineas.length + 1),
+    nombre: 'Jezero Canyon #' + (barrancosLineas.length + 1),
     tramo: tramoEnCurso
   });
   tramoEnCurso = [];
@@ -1306,7 +1306,7 @@ document.getElementById('btnNuevoTramo')?.addEventListener('click', () => {
     lineaPreviaEditor = null;
   }
   actualizarVistaYCodigoPeligros();
-  actualizarEstado(`Barranco guardado (${barrancosLineas.length} activos)`);
+  actualizarEstado(`Canyon saved (${barrancosLineas.length} active)`);
 });
 
 document.getElementById('btnBorrarEditor')?.addEventListener('click', () => {
@@ -1317,11 +1317,11 @@ document.getElementById('btnBorrarEditor')?.addEventListener('click', () => {
   localStorage.removeItem('mars_barrancos_custom');
   localStorage.removeItem('mars_tormentas_custom');
   actualizarVistaYCodigoPeligros();
-  actualizarEstado('Barrancos y círculos de tormenta borrados');
+  actualizarEstado('Canyons and storm circles cleared');
 });
 
 // =========================================================================
-// 11. SIMULADOR GPS ANIMADO
+// 11. ANIMATED GPS SIMULATOR
 // =========================================================================
 let intervaloGPS = null;
 let lineasTriangulacion = [];
@@ -1353,15 +1353,15 @@ function actualizarTriangulacionBalizas(pos) {
 document.getElementById('btnSimularGPS')?.addEventListener('click', () => {
   const rutasConCamino = rutas.filter((r) => r.puntosClick.length === 2);
   if (rutasConCamino.length === 0) {
-    alert('Primero marca Origen (A) y Destino (B) en al menos una de las 3 rutas.');
+    alert('First set Origin (A) and Destination (B) on at least one of the 3 routes.');
     return;
   }
 
   if (intervaloGPS) {
     clearInterval(intervaloGPS);
     intervaloGPS = null;
-    document.getElementById('btnSimularGPS').textContent = '▶ Iniciar Navegación GPS';
-    actualizarEstado('Simulación GPS en pausa');
+    document.getElementById('btnSimularGPS').textContent = '▶ Start GPS Navigation';
+    actualizarEstado('GPS simulation paused');
     return;
   }
 
@@ -1369,7 +1369,7 @@ document.getElementById('btnSimularGPS')?.addEventListener('click', () => {
     if (r.progresoPct >= 100) r.progresoPct = 0;
   });
 
-  document.getElementById('btnSimularGPS').textContent = '⏸ Pausar Navegación GPS';
+  document.getElementById('btnSimularGPS').textContent = '⏸ Pause GPS Navigation';
   const banner = document.getElementById('gps-banner');
   if (banner) banner.style.display = 'block';
 
@@ -1394,17 +1394,17 @@ document.getElementById('btnSimularGPS')?.addEventListener('click', () => {
 
     if (posActual && balizas.length >= 2) {
       document.getElementById('gpsInstruccion').innerHTML =
-        `🧭 ${rActiva.nombre} en marcha (${rActiva.progresoPct}% completado)`;
+        `🧭 ${rActiva.nombre} underway (${rActiva.progresoPct}% completed)`;
       document.getElementById('gpsSubdato').innerHTML =
-        `Triangulación Local: Balizas <b>${balizas[0].id}</b> (${balizas[0].dist.toFixed(1)} km) y <b>${balizas[1].id}</b> (${balizas[1].dist.toFixed(1)} km)`;
+        `Local Triangulation: Beacons <b>${balizas[0].id}</b> (${balizas[0].dist.toFixed(1)} km) & <b>${balizas[1].id}</b> (${balizas[1].dist.toFixed(1)} km)`;
     }
 
     if (!algunaAvanzando) {
       clearInterval(intervaloGPS);
       intervaloGPS = null;
-      document.getElementById('btnSimularGPS').textContent = '▶ Iniciar Navegación GPS';
-      document.getElementById('gpsInstruccion').innerHTML = '🏁 RECORRIDO COMPLETADO (100%)';
-      actualizarEstado('Simulación GPS completada');
+      document.getElementById('btnSimularGPS').textContent = '▶ Start GPS Navigation';
+      document.getElementById('gpsInstruccion').innerHTML = '🏁 ROUTE COMPLETED (100%)';
+      actualizarEstado('GPS simulation completed');
     }
   }, 140);
 });
@@ -1414,7 +1414,7 @@ document.getElementById('btnLimpiar')?.addEventListener('click', () => {
     clearInterval(intervaloGPS);
     intervaloGPS = null;
   }
-  document.getElementById('btnSimularGPS').textContent = '▶ Iniciar Navegación GPS';
+  document.getElementById('btnSimularGPS').textContent = '▶ Start GPS Navigation';
   lineasTriangulacion.forEach((l) => map.removeLayer(l));
   lineasTriangulacion = [];
   document.getElementById('gps-banner').style.display = 'none';
@@ -1435,7 +1435,7 @@ document.getElementById('btnLimpiar')?.addEventListener('click', () => {
   });
 
   seleccionarRuta(0);
-  actualizarEstado('Todas las rutas reiniciadas — Haz clic en el mapa para Ruta 1');
+  actualizarEstado('All routes reset — Click on the map for Route 1');
 });
 
 document.getElementById('btnHud')?.addEventListener('click', () => {
@@ -1449,7 +1449,7 @@ document.getElementById('btnSalirHud')?.addEventListener('click', () => {
 });
 
 // =========================================================================
-// 12. CONEXIÓN DIRECTA EN VIVO CON NASA JPL (PERSEVERANCE RAW IMAGES API)
+// 12. DIRECT LIVE CONNECTION WITH NASA JPL (PERSEVERANCE RAW IMAGES API)
 // =========================================================================
 let paquetesNasaEnVivo = [];
 let indicePaqueteNasa = 0;
@@ -1460,7 +1460,7 @@ async function descargarTelemetriaRealNASA() {
   if (!contenedor) return;
 
   if (badge) {
-    badge.textContent = 'SINCRONIZANDO...';
+    badge.textContent = 'SYNCING...';
     badge.style.background = '#d97706';
   }
 
@@ -1471,21 +1471,21 @@ async function descargarTelemetriaRealNASA() {
 
   try {
     let listaNormalizada = [];
-    let totalImagenesMision = '1.000.000+';
+    let totalImagenesMision = '1,000,000+';
 
     try {
       const respJPL = await fetch(urlJPL);
       if (respJPL.ok) {
         const dataJPL = await respJPL.json();
         if (dataJPL.images && dataJPL.images.length > 0) {
-          totalImagenesMision = Number(dataJPL.total_images || 1070000).toLocaleString('es-ES');
+          totalImagenesMision = Number(dataJPL.total_images || 1070000).toLocaleString('en-US');
           listaNormalizada = dataJPL.images.map((img) => ({
             sol: img.sol,
-            horaMarte: img.date_taken_mars || 'N/D',
-            fechaTierra: img.date_taken_utc ? img.date_taken_utc.replace('T', ' ').slice(0, 19) + ' UTC' : 'Reciente',
+            horaMarte: img.date_taken_mars || 'N/A',
+            fechaTierra: img.date_taken_utc ? img.date_taken_utc.replace('T', ' ').slice(0, 19) + ' UTC' : 'Recent',
             camara: img.camera?.instrument || 'NAVCAM',
-            sectorSite: img.site ?? 'N/D',
-            desplazamientoDrive: img.drive ?? 'N/D',
+            sectorSite: img.site ?? 'N/A',
+            desplazamientoDrive: img.drive ?? 'N/A',
             fotoUrl: img.image_files?.medium || img.image_files?.small || ''
           }));
         }
@@ -1494,64 +1494,64 @@ async function descargarTelemetriaRealNASA() {
 
     if (listaNormalizada.length === 0) {
       const respOpen = await fetch(urlOpenNASA);
-      if (!respOpen.ok) throw new Error('Error HTTP ' + respOpen.status);
+      if (!respOpen.ok) throw new Error('HTTP Error ' + respOpen.status);
       const dataOpen = await respOpen.json();
 
       if (dataOpen.latest_photos && dataOpen.latest_photos.length > 0) {
         listaNormalizada = dataOpen.latest_photos.slice(0, 10).map((foto) => ({
           sol: foto.sol,
           horaMarte: 'Sol ' + foto.sol + ' LMST',
-          fechaTierra: foto.earth_date + ' (Tierra)',
-          camara: foto.camera?.full_name || foto.camera?.name || 'Cámara Rover',
+          fechaTierra: foto.earth_date + ' (Earth)',
+          camara: foto.camera?.full_name || foto.camera?.name || 'Rover Camera',
           sectorSite: 'Jezero Rim',
-          desplazamientoDrive: 'Activo',
+          desplazamientoDrive: 'Active',
           fotoUrl: foto.img_src
         }));
       }
     }
 
-    if (listaNormalizada.length === 0) throw new Error('Sin paquetes');
+    if (listaNormalizada.length === 0) throw new Error('No packets');
 
     paquetesNasaEnVivo = listaNormalizada;
     indicePaqueteNasa = 0;
 
     if (badge) {
-      badge.textContent = 'EN VIVO';
+      badge.textContent = 'LIVE';
       badge.style.background = '#16a34a';
     }
     pintarPaqueteNasaEnPantalla(totalImagenesMision);
   } catch (err) {
     if (badge) {
-      badge.textContent = 'MODO LOCAL';
+      badge.textContent = 'LOCAL MODE';
       badge.style.background = '#475569';
     }
-    contenedor.innerHTML = 'Operando con telemetría local NASA PDS MEDA (Sol 1-36).';
+    contenedor.innerHTML = 'Operating with local NASA PDS MEDA telemetry (Sol 1-36).';
   }
 }
 
-function pintarPaqueteNasaEnPantalla(totalMision = '1.070.000+') {
+function pintarPaqueteNasaEnPantalla(totalMision = '1,070,000+') {
   const contenedor = document.getElementById('datosNasaEnVivo');
   if (!contenedor || paquetesNasaEnVivo.length === 0) return;
 
   const item = paquetesNasaEnVivo[indicePaqueteNasa];
 
   contenedor.innerHTML =
-    `<b>Sol Actual: ${item.sol}</b> | Sector: <b>Site ${item.sectorSite} / Drive ${item.desplazamientoDrive}</b><br>` +
-    `• Recepción Tierra: <b>${item.fechaTierra}</b><br>` +
-    `• Instrumento: <b>${item.camara}</b> (${totalMision} capturas)<br>` +
+    `<b>Current Sol: ${item.sol}</b> | Sector: <b>Site ${item.sectorSite} / Drive ${item.desplazamientoDrive}</b><br>` +
+    `• Earth Downlink: <b>${item.fechaTierra}</b><br>` +
+    `• Instrument: <b>${item.camara}</b> (${totalMision} captures)<br>` +
     (item.fotoUrl
-      ? `<img src="${item.fotoUrl}" alt="Vista real Marte" style="width:100%; max-height:110px; object-fit:cover; border-radius:6px; margin-top:5px; border:1px solid #334155;">`
+      ? `<img src="${item.fotoUrl}" alt="Real Mars Surface" style="width:100%; max-height:110px; object-fit:cover; border-radius:6px; margin-top:5px; border:1px solid #334155;">`
       : '');
 
   if (typeof marcadoresPuntosSeguros !== 'undefined' && marcadoresPuntosSeguros['S4'] && item.fotoUrl) {
     const pBase = puntosSegurosNaranja.find((p) => p.id === 'S4');
     marcadoresPuntosSeguros['S4'].setPopupContent(
       `<div style="color:#111; max-width:250px;">` +
-      `<b>Punto Seguro [S4]: ${pBase.nombre}</b><br>` +
+      `<b>Safe Beacon [S4]: ${pBase.nombre}</b><br>` +
       `<small>${pBase.recursos}</small><br>` +
       `<div style="margin-top:6px; background:#f1f5f9; padding:5px; border-radius:4px;">` +
-      `<small><b>En Vivo NASA JPL (Sol ${item.sol}):</b></small><br>` +
-      `<img src="${item.fotoUrl}" alt="Superficie Jezero" style="width:100%; border-radius:4px; margin-top:4px;">` +
+      `<small><b>Live NASA JPL (Sol ${item.sol}):</b></small><br>` +
+      `<img src="${item.fotoUrl}" alt="Jezero Surface" style="width:100%; border-radius:4px; margin-top:4px;">` +
       `<small style="color:#475569;">${item.camara} • ${item.fechaTierra}</small>` +
       `</div></div>`
     );
@@ -1570,4 +1570,4 @@ document.getElementById('btnRefrescarNasaLive')?.addEventListener('click', () =>
   descargarTelemetriaRealNASA();
 });
 
-console.log('MarsWalk SafeNav v6.1 con BASE y botón Elegir otra opción cargado.');
+console.log('J0-ATLAS v7 English Interface loaded successfully.');

@@ -68,7 +68,7 @@
     input[type="range"] { width: 100%; margin: 2px 0 5px 0; accent-color: #ff9e64; cursor: pointer; }
     textarea { user-select: text; }
 
-    /* Selector de las 3 Rutas (Arriba a la izquierda en Sidebar y Flotante en Mapa) */
+    /* Selector de las 3 Rutas */
     .selector-rutas {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
@@ -104,6 +104,80 @@
       width: auto;
       padding: 6px 12px;
       white-space: nowrap;
+    }
+
+    /* Iconos personalizados de Astronauta y Refugio en el mapa */
+    .astro-marker-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      pointer-events: auto;
+    }
+    .astro-circle {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 2.5px solid #ffffff;
+      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.75);
+      transition: transform 0.15s ease;
+    }
+    .astro-circle.seleccionado {
+      transform: scale(1.16);
+      box-shadow: 0 0 14px rgba(255, 255, 255, 0.9);
+    }
+    .astro-circle.critico {
+      background: #ef4444 !important;
+      animation: pulsoCritico 0.85s infinite;
+    }
+    .astro-label {
+      margin-top: 2px;
+      background: rgba(15, 23, 42, 0.92);
+      color: #ffffff;
+      font-size: 10px;
+      font-weight: bold;
+      padding: 1px 5px;
+      border-radius: 4px;
+      border: 1px solid rgba(255, 255, 255, 0.35);
+      white-space: nowrap;
+    }
+
+    .refugio-marker-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    .refugio-badge {
+      width: 42px;
+      height: 42px;
+      border-radius: 10px;
+      background: radial-gradient(circle at 30% 30%, #38bdf8, #0369a1);
+      border: 2.5px solid #ffffff;
+      box-shadow: 0 0 14px rgba(56, 189, 248, 0.85);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .refugio-label {
+      margin-top: 2px;
+      background: #0284c7;
+      color: #ffffff;
+      font-size: 10px;
+      font-weight: bold;
+      padding: 1px 6px;
+      border-radius: 4px;
+      border: 1px solid #ffffff;
+      white-space: nowrap;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.6);
+    }
+
+    @keyframes pulsoCritico {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.9); }
+      50% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
     }
 
     /* Filtros científicos sobre las teselas NASA */
@@ -223,7 +297,7 @@
     <p class="subtitulo">Sector: Delta Cráter Jezero (Multi-Ruta EVA)</p>
     <div id="estadoSistema">Cargando motor del mapa...</div>
 
-    <!-- SELECTOR DE LAS 3 RUTAS (ARRIBA A LA IZQUIERDA) -->
+    <!-- SELECTOR DE LAS 3 RUTAS -->
     <div class="panel" style="border-color:#38bdf8;">
       <label style="color:#38bdf8; font-weight:bold; margin-bottom:5px;">Selección de Ruta / Astronauta (Máx. 3):</label>
       <div class="selector-rutas">
@@ -263,7 +337,7 @@
 
     <div class="panel" id="infoRuta">
       Haz clic en dos puntos del mapa para marcar <b>Origen (A)</b> y <b>Destino (B)</b> de la <b>Ruta 1</b>.<br>
-      <small style="color:#9aa5ce;">Haz clic sobre cualquier ruta en el mapa para ver y editar su astronauta.</small>
+      <small style="color:#9aa5ce;">Haz clic sobre cualquier ruta o astronauta en el mapa para ver sus datos.</small>
     </div>
 
     <!-- DATOS COMPARTIDOS DE LA MISIÓN -->
@@ -319,20 +393,23 @@
     </div>
 
     <div>
-      <button type="button" id="btnPonerRefugios">📍 Colocar puntos de refugios azules</button>
+      <button type="button" id="btnPonerRefugios">🏠 Colocar Refugios en el Mapa</button>
     </div>
 
     <!-- EDITOR DE BARRANCOS (LÍNEAS ROJAS) Y CÍRCULOS DE TORMENTA -->
     <div class="panel" style="border-color:#ef4444;">
       <b style="color:#f87171;">Editor de Peligros (Barrancos y Tormentas):</b>
-      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px; margin-top:6px;">
-        <button type="button" id="btnModoEditor" style="background:#b91c1c; font-size:0.76rem;">
+      <div style="display:grid; grid-template-columns: 1.15fr 1fr; gap:6px; margin-top:6px;">
+        <button type="button" id="btnModoEditor" style="background:#b91c1c; font-size:0.75rem;">
           ✏️ Línea Barranco
         </button>
-        <button type="button" id="btnModoTormenta" style="background:#d97706; font-size:0.76rem;">
-          🌪️ Círculo Tormenta
+        <button type="button" id="btnToggleBarrancos" style="background:#334155; font-size:0.75rem;">
+          👁️ Ocultar Líneas
         </button>
       </div>
+      <button type="button" id="btnModoTormenta" style="background:#d97706; font-size:0.76rem; margin-top:6px;">
+        🌪️ Círculo Tormenta
+      </button>
 
       <div id="controlesEditor" style="display:none; margin-top:8px;">
         <small id="instruccionEditor" style="color:#cbd5e1;">Haz clic sobre el mapa siguiendo el borde del barranco:</small>
@@ -378,7 +455,6 @@
   </div>
 
   <div id="map-container">
-    <!-- Botonera flotante arriba a la izquierda en el mapa para cambiar rápido entre Ruta 1, 2 y 3 -->
     <div id="selectorRutasMapa">
       <button type="button" class="btn-ruta activa-r1" id="btnMapRuta1">● Ruta 1 (EVA-1)</button>
       <button type="button" class="btn-ruta" id="btnMapRuta2">● Ruta 2 (EVA-2)</button>
@@ -412,7 +488,7 @@
     </div>
   </div>
 
-  <!-- ALERTA ROJA: ABORTO / FALTA DE OXÍGENO O BATERÍA -->
+  <!-- ALERTA ROJA -->
   <div id="alertaAborto">
     <svg viewBox="0 0 100 100" class="icono-peligro">
       <path d="M50 8 L94 88 H6 Z" fill="#ef4444" stroke="#ffffff" stroke-width="4" stroke-linejoin="round" />
@@ -425,7 +501,7 @@
     </div>
   </div>
 
-  <!-- ALERTA AMARILLA: DESVÍO -->
+  <!-- ALERTA AMARILLA -->
   <div id="alertaDesvio">
     <svg viewBox="0 0 100 100" class="icono-desvio">
       <path d="M50 8 L94 88 H6 Z" fill="#cf770c" stroke="#ffffff" stroke-width="4" stroke-linejoin="round" />
@@ -438,7 +514,7 @@
     </div>
   </div>
 
-  <!-- ALERTA AZUL: TORMENTA DE POLVO -->
+  <!-- ALERTA AZUL -->
   <div id="alertaRefugio">
     <svg viewBox="0 0 100 100" class="icono-refugio">
       <path d="M50 8 L94 88 H6 Z" fill="#0284c7" stroke="#ffffff" stroke-width="4" stroke-linejoin="round" />
@@ -452,6 +528,6 @@
   </div>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script src="app.js?v=4"></script>
+  <script src="app.js?v=5"></script>
 </body>
 </html>

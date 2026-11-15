@@ -8,7 +8,7 @@ const limitesNASA = L.latLngBounds(
 
 const CENTRO_JEZERO = [18.485, 77.435];
 const RADIO_MARTE = 3389500;
-const UMBRAL_CRITICO_VITAL = 30; // < 30% de O2 o Batería pone el punto del astronauta en rojo y lanza alerta
+const UMBRAL_CRITICO_VITAL = 30;
 
 const map = L.map('map', {
   crs: L.CRS.EPSG4326,
@@ -23,6 +23,77 @@ const map = L.map('map', {
 function actualizarEstado(texto) {
   const el = document.getElementById('estadoSistema');
   if (el) el.textContent = texto;
+}
+
+// =========================================================================
+// 1.1. ICONOS VISUALES DE ASTRONAUTA Y REFUGIO MARCIANO
+// =========================================================================
+function crearIconoAstronauta(ruta, esCritico, esSeleccionada) {
+  const colorFondo = esCritico ? '#ef4444' : ruta.color;
+  const claseSel = esSeleccionada ? 'seleccionado' : '';
+  const claseCrit = esCritico ? 'critico' : '';
+
+  const html = `
+    <div class="astro-marker-wrap">
+      <div class="astro-circle ${claseSel} ${claseCrit}" style="background:${colorFondo};">
+        <svg viewBox="0 0 64 64" width="24" height="24">
+          <!-- Mochila PLSS -->
+          <rect x="13" y="26" width="38" height="22" rx="6" fill="#cbd5e1" />
+          <!-- Casco espacial blanco -->
+          <circle cx="32" cy="24" r="16" fill="#ffffff" stroke="#1e293b" stroke-width="2.5" />
+          <!-- Visor dorado/azul reflectante -->
+          <rect x="20" y="16" width="24" height="14" rx="7" fill="#0f172a" />
+          <path d="M24 19 Q32 16 39 19" stroke="#38bdf8" stroke-width="2.5" fill="none" stroke-linecap="round" />
+          <!-- Traje torso -->
+          <path d="M16 54 C16 42 48 42 48 54 Z" fill="#f8fafc" stroke="#1e293b" stroke-width="2" />
+          <rect x="27" y="45" width="10" height="6" rx="1.5" fill="#ef4444" />
+        </svg>
+      </div>
+      <div class="astro-label" style="border-color:${colorFondo};">${ruta.codigo}</div>
+    </div>
+  `;
+
+  return L.divIcon({
+    html: html,
+    className: '',
+    iconSize: [48, 54],
+    iconAnchor: [24, 20],
+    popupAnchor: [0, -22]
+  });
+}
+
+function crearIconoRefugio(idRefugio) {
+  // Si prefieres usar tu imagen descargada (ej. 'refugio.png'), puedes sustituir el <svg> por:
+  // <img src="refugio.png" style="width:34px; height:34px; object-fit:contain;">
+  const html = `
+    <div class="refugio-marker-wrap">
+      <div class="refugio-badge">
+        <svg viewBox="0 0 64 64" width="28" height="28">
+          <!-- Antena de comunicaciones -->
+          <line x1="32" y1="6" x2="32" y2="16" stroke="#ffffff" stroke-width="3" stroke-linecap="round" />
+          <circle cx="32" cy="5" r="3" fill="#facc15" />
+          <!-- Domo geodésico hábitat -->
+          <path d="M10 46 A22 22 0 0 1 54 46 Z" fill="#f8fafc" stroke="#0f172a" stroke-width="2.5" />
+          <!-- Líneas estructurales del domo -->
+          <path d="M21 46 A14 22 0 0 1 32 24 A14 22 0 0 1 43 46" fill="none" stroke="#94a3b8" stroke-width="1.5" />
+          <!-- Esclusa central de entrada -->
+          <rect x="25" y="34" width="14" height="12" rx="3" fill="#0284c7" stroke="#0f172a" stroke-width="2" />
+          <circle cx="32" cy="40" r="2.5" fill="#7dd3fc" />
+          <!-- Base plataforma -->
+          <rect x="6" y="46" width="52" height="6" rx="2" fill="#334155" />
+        </svg>
+      </div>
+      <div class="refugio-label">REFUGIO ${idRefugio}</div>
+    </div>
+  `;
+
+  return L.divIcon({
+    html: html,
+    className: '',
+    iconSize: [64, 60],
+    iconAnchor: [32, 24],
+    popupAnchor: [0, -24]
+  });
 }
 
 // =========================================================================
@@ -125,11 +196,6 @@ puntosSegurosNaranja.forEach((p) => {
 // 4. CONSTANTES NASA PDS (MEDA) Y FÓRMULA MATEMÁTICA DE TEMPORAL Y RIESGOS
 // =========================================================================
 const DATOS_BASE_NASA_MEDA = {
-  urnATS: 'urn:nasa:pds:mars2020_meda:data_calibrated_env:we__0001___________cal_ats_________________p',
-  urnPS:  'urn:nasa:pds:mars2020_meda:data_calibrated_env:we__0001___________cal_ps__________________p',
-  urnRDS: 'urn:nasa:pds:mars2020_meda:data_calibrated_env:we__0001___________cal_rds_________________p',
-  urnTIRS:'urn:nasa:pds:mars2020_meda:data_calibrated_env:we__0001___________cal_tirs________________p',
-  urnWS:  'urn:nasa:pds:mars2020_meda:data_calibrated_env:we__0036___________cal_ws__________________p',
   marsYear: 36,
   solarLongitudeLs: 6.15,
   tempAireC: -26.4,
@@ -178,7 +244,6 @@ function distanciaTotalRutaKm(listaLatLng) {
   return total;
 }
 
-// Calcula la coordenada exacta (LatLng) correspondiente al porcentaje (0% - 100%) sobre una polilínea
 function obtenerPuntoEnPorcentaje(puntosCamino, porcentaje) {
   if (!puntosCamino || puntosCamino.length === 0) return null;
   if (puntosCamino.length === 1 || porcentaje <= 0) return L.latLng(puntosCamino[0].lat, puntosCamino[0].lng);
@@ -258,7 +323,7 @@ const rutas = [
     id: 1,
     codigo: 'EVA-01',
     nombre: 'Ruta 1 (EVA-01)',
-    color: '#22c55e', // Verde
+    color: '#22c55e',
     claseBtn: 'activa-r1',
     puntosClick: [],
     puntosCamino: [],
@@ -278,7 +343,7 @@ const rutas = [
     id: 2,
     codigo: 'EVA-02',
     nombre: 'Ruta 2 (EVA-02)',
-    color: '#a855f7', // Morado
+    color: '#a855f7',
     claseBtn: 'activa-r2',
     puntosClick: [],
     puntosCamino: [],
@@ -298,12 +363,12 @@ const rutas = [
     id: 3,
     codigo: 'EVA-03',
     nombre: 'Ruta 3 (EVA-03)',
-    color: '#eab308', // Amarillo
+    color: '#eab308',
     claseBtn: 'activa-r3',
     puntosClick: [],
     puntosCamino: [],
     progresoPct: 65,
-    oxigeno: 25, // Por defecto bajo el umbral (<30%) para probar al instante el punto rojo
+    oxigeno: 25,
     bateria: 80,
     marcadoresAB: [],
     polilinea: null,
@@ -316,13 +381,14 @@ const rutas = [
   }
 ];
 
-let rutaActivaIdx = 0; // 0 = Ruta 1, 1 = Ruta 2, 2 = Ruta 3
+let rutaActivaIdx = 0;
 
 // =========================================================================
-// 6. BARRANCOS (LÍNEAS ROJAS), CÍRCULOS DE TORMENTA Y MOTOR A*
+// 6. BARRANCOS (CON TOGGLE DE VISIBILIDAD), CÍRCULOS DE TORMENTA Y MOTOR A*
 // =========================================================================
 let barrancosLineas = [];
 let tormentasCirculos = [];
+let barrancosVisibles = true; // Controla si las líneas rojas se ven en pantalla o están ocultas
 
 try {
   const guardadoB = JSON.parse(localStorage.getItem('mars_barrancos_custom') || '[]');
@@ -352,20 +418,22 @@ function actualizarVistaYCodigoPeligros() {
   capasPeligrosCustom.forEach((c) => map.removeLayer(c));
   capasPeligrosCustom = [];
 
-  // Dibujar líneas rojas de barrancos
-  barrancosLineas.forEach((b) => {
-    const poly = L.polyline(b.tramo, {
-      color: '#ef4444',
-      weight: 5,
-      opacity: 0.95,
-      interactive: false
-    }).addTo(map);
-    capasPeligrosCustom.push(poly);
-  });
+  // Dibujar líneas rojas SOLO si barrancosVisibles es true (pero siguen activas en memoria para A*)
+  if (barrancosVisibles) {
+    barrancosLineas.forEach((b) => {
+      const poly = L.polyline(b.tramo, {
+        color: '#ef4444',
+        weight: 5,
+        opacity: 0.95,
+        interactive: false
+      }).addTo(map);
+      capasPeligrosCustom.push(poly);
+    });
+  }
 
   // Dibujar círculos de tormenta manuales
   tormentasCirculos.forEach((t) => {
-    const gradosLat = t.radioKm / 59.15; // Conversión km -> grados en Marte (EPSG:4326)
+    const gradosLat = t.radioKm / 59.15;
     const circ = L.circle(t.centro, {
       radius: gradosLat * 111320,
       color: '#f97316',
@@ -460,7 +528,6 @@ function calcularRutaConAStar(origen, destino, modo) {
 
   const blocked = Array.from({ length: ROWS }, () => Array(COLS).fill(false));
 
-  // Bloquear líneas rojas de barrancos (si no va en dron)
   if (modo !== 'dron') {
     barrancosLineas.forEach((b) => {
       for (let i = 0; i < b.tramo.length - 1; i++) {
@@ -476,7 +543,6 @@ function calcularRutaConAStar(origen, destino, modo) {
     });
   }
 
-  // Bloquear círculos de tormenta para rodearlos si es posible
   tormentasCirculos.forEach((tor) => {
     for (let r = 0; r < ROWS; r++) {
       for (let c = 0; c < COLS; c++) {
@@ -598,8 +664,6 @@ function calcularRutaConAStar(origen, destino, modo) {
 // 7. GESTIÓN DE REFUGIOS Y ESCAPE DINÁMICO DESDE POSICIÓN DEL ASTRONAUTA
 // =========================================================================
 function obtenerListaRefugiosDisponibles() {
-  // Si el usuario ha colocado refugios azules personalizados, se usan esos;
-  // si aún no ha puesto ninguno, se usan los 6 puntos seguros naranjas como respaldo
   if (refugiosColocados.length > 0) {
     return refugiosColocados.map((r) => ({
       id: r.id,
@@ -622,7 +686,6 @@ function seleccionarRuta(idx) {
   rutaActivaIdx = idx;
   const r = rutas[rutaActivaIdx];
 
-  // Actualizar botones del sidebar y del mapa
   [1, 2, 3].forEach((n, i) => {
     const bSide = document.getElementById('btnSelRuta' + n);
     const bMap = document.getElementById('btnMapRuta' + n);
@@ -631,7 +694,6 @@ function seleccionarRuta(idx) {
     if (bMap) bMap.classList.toggle(cls, i === rutaActivaIdx);
   });
 
-  // Sincronizar barras del astronauta seleccionado
   const panelAstro = document.getElementById('panelAstronauta');
   if (panelAstro) panelAstro.style.borderColor = r.color;
 
@@ -674,11 +736,9 @@ function recalcularTodasLasRutas() {
   const hayTormentaGlobal = polvoGlobal >= 65;
   const listaRefugios = obtenerListaRefugiosDisponibles();
 
-  // Dibujar y evaluar cada una de las 3 rutas
   rutas.forEach((r, idx) => {
     const esSeleccionada = idx === rutaActivaIdx;
 
-    // Limpiar capas dinámicas previas de esta ruta
     if (r.polilinea) {
       map.removeLayer(r.polilinea);
       r.polilinea = null;
@@ -692,7 +752,6 @@ function recalcularTodasLasRutas() {
 
     if (r.puntosClick.length < 2) return;
 
-    // 1) Calcular camino con A* respetando líneas rojas y círculos de tormenta
     const resAStar = calcularRutaConAStar(r.puntosClick[0], r.puntosClick[1], modoElegido);
     r.puntosCamino = resAStar.puntosRuta;
     r.rodeoAplicado = resAStar.rodeoAplicado;
@@ -700,7 +759,6 @@ function recalcularTodasLasRutas() {
     r.tocaCirculoTormenta = resAStar.tocaTormenta;
     r.sinSalida = resAStar.sinSalida;
 
-    // 2) Dibujar polilínea de la ruta (resaltada si es la seleccionada)
     r.polilinea = L.polyline(r.puntosCamino, {
       color: r.sinSalida ? '#ef4444' : r.color,
       weight: esSeleccionada ? 6 : 3.5,
@@ -709,18 +767,15 @@ function recalcularTodasLasRutas() {
       interactive: true
     }).addTo(map);
 
-    // Al hacer clic en la ruta en el mapa, se selecciona esa ruta y muestra los datos de su astronauta
     r.polilinea.on('click', (ev) => {
       L.DomEvent.stopPropagation(ev);
       seleccionarRuta(idx);
       if (r.marcadorAstro) r.marcadorAstro.openPopup();
     });
 
-    // 3) Posición exacta del astronauta según su % de ruta completado
     const posAstro = obtenerPuntoEnPorcentaje(r.puntosCamino, r.progresoPct);
     const faltaVital = r.oxigeno < UMBRAL_CRITICO_VITAL || r.bateria < UMBRAL_CRITICO_VITAL;
 
-    // Comprobar si el astronauta actual está dentro de algún círculo de tormenta
     const astroEnTormentaLocal = tormentasCirculos.some(
       (tc) => distanciaMarteKm(posAstro, { lat: tc.centro[0], lng: tc.centro[1] }) <= tc.radioKm * 1.15
     );
@@ -728,8 +783,6 @@ function recalcularTodasLasRutas() {
     const requiereEvacuacion =
       faltaVital || hayTormentaGlobal || astroEnTormentaLocal || r.tocaCirculoTormenta || commsGlobal < 25;
 
-    // 4) Si hay tormenta (TODAS las rutas) o si esta ruta sufre falta de O2/batería/alerta,
-    // mostrar desde el punto exacto donde está el astronauta las rutas hacia los distintos refugios
     let refugioOptimoInfo = null;
 
     if (requiereEvacuacion && listaRefugios.length > 0) {
@@ -743,7 +796,6 @@ function recalcularTodasLasRutas() {
 
       refugioOptimoInfo = evaluados[0];
 
-      // Dibujar líneas desde la posición actual del astronauta a los distintos refugios del mapa
       evaluados.forEach((evRef, iRef) => {
         const esElMasCercano = iRef === 0;
         const lineaEsc = L.polyline(evRef.puntosEscape, {
@@ -757,14 +809,11 @@ function recalcularTodasLasRutas() {
       });
     }
 
-    // 5) Dibujar el punto del astronauta sobre la ruta (SE PONE ROJO si baja del umbral o hay peligro)
+    // Dibujar el icono del ASTRONAUTA sobre la ruta (se pone rojo si baja del umbral o hay peligro)
     const puntoEnRojo = faltaVital || astroEnTormentaLocal || r.sinSalida;
-    r.marcadorAstro = L.circleMarker(posAstro, {
-      radius: esSeleccionada ? 10 : 8,
-      color: '#ffffff',
-      weight: esSeleccionada ? 3 : 2,
-      fillColor: puntoEnRojo ? '#ef4444' : r.color,
-      fillOpacity: 1
+    r.marcadorAstro = L.marker(posAstro, {
+      icon: crearIconoAstronauta(r, puntoEnRojo, esSeleccionada),
+      zIndexOffset: esSeleccionada ? 1000 : 500
     }).addTo(map);
 
     const distTotalR = distanciaTotalRutaKm(r.puntosCamino);
@@ -792,7 +841,6 @@ function recalcularTodasLasRutas() {
     r.refugioOptimoInfo = refugioOptimoInfo;
   });
 
-  // Actualizar panel lateral y alertas superiores según la ruta actualmente seleccionada
   actualizarPanelYAlertasRutaSeleccionada();
 }
 
@@ -807,7 +855,6 @@ function actualizarPanelYAlertasRutaSeleccionada() {
   const kmRecorridos = distTotal * (r.progresoPct / 100);
   const kmRestantes = Math.max(0, distTotal - kmRecorridos);
 
-  // Actualizar textos de las barras del astronauta seleccionado
   const valDistEl = document.getElementById('valDistancia');
   if (valDistEl) {
     valDistEl.textContent = `${r.progresoPct}% (${kmRecorridos.toFixed(2)} / ${distTotal.toFixed(2)} km)`;
@@ -932,30 +979,29 @@ function actualizarPanelYAlertasRutaSeleccionada() {
 }
 
 // =========================================================================
-// 9. CLIC EN EL MAPA (REFUGIOS, BARRANCOS, CÍRCULOS DE TORMENTA O 3 RUTAS)
+// 9. CLIC EN EL MAPA (REFUGIOS CON ICONO, BARRANCOS, TORMENTAS O 3 RUTAS)
 // =========================================================================
 map.on('click', (e) => {
-  // 1) MODO COLOCAR REFUGIOS AZULES
+  // 1) MODO COLOCAR REFUGIOS EN EL MAPA
   if (modoColocarRefugios) {
     const lat = e.latlng.lat;
     const lng = e.latlng.lng;
     const idRefugio = 'R' + contadorRefugios;
 
-    const marcadorRefugio = L.circleMarker([lat, lng], {
-      radius: 9,
-      color: '#ffffff',
-      weight: 2,
-      fillColor: '#007bff',
-      fillOpacity: 1
+    const marcadorRefugio = L.marker([lat, lng], {
+      icon: crearIconoRefugio(idRefugio),
+      zIndexOffset: 800
     }).addTo(map);
 
     refugiosColocados.push({ id: idRefugio, lat, lng, marcador: marcadorRefugio });
 
     marcadorRefugio.bindPopup(
-      `<div style="color:#111;"><b>Refugio Azul ${idRefugio}</b><br>Lat: ${lat.toFixed(5)}°<br>Lon: ${lng.toFixed(5)}°</div>`
+      `<div style="color:#111;"><b>🏠 Refugio Presurizado ${idRefugio}</b><br>` +
+      `<small>Soporte vital, O2 y recarga de traje activos</small><br>` +
+      `<small style="color:#555;">Lat: ${lat.toFixed(5)}° | Lon: ${lng.toFixed(5)}°</small></div>`
     ).openPopup();
 
-    actualizarEstado(`Refugio ${idRefugio} añadido — Rutas de escape actualizadas`);
+    actualizarEstado(`Refugio ${idRefugio} colocado — Rutas de escape actualizadas`);
     contadorRefugios++;
     recalcularTodasLasRutas();
     return;
@@ -983,7 +1029,7 @@ map.on('click', (e) => {
     return;
   }
 
-  // 4) MODO AÑADIR ORIGEN (A) Y DESTINO (B) A LA RUTA SELECCIONADA (1, 2 o 3)
+  // 4) MODO AÑADIR ORIGEN (A) Y DESTINO (B) A LA RUTA SELECCIONADA
   const r = rutas[rutaActivaIdx];
   if (r.puntosClick.length >= 2) {
     actualizarEstado(`${r.nombre} ya tiene A y B. Usa "Borrar Ruta Seleccionada" o cambia a otra Ruta.`);
@@ -994,7 +1040,7 @@ map.on('click', (e) => {
   const esOrigen = r.puntosClick.length === 1;
 
   const marcador = L.circleMarker(e.latlng, {
-    radius: 7,
+    radius: 6,
     color: '#ffffff',
     weight: 2,
     fillColor: esOrigen ? '#4ade80' : '#f87171',
@@ -1024,7 +1070,6 @@ map.on('click', (e) => {
   document.getElementById('btnMapRuta' + num)?.addEventListener('click', () => seleccionarRuta(idx));
 });
 
-// Sliders individuales del astronauta seleccionado (Progreso %, Oxígeno y Batería)
 document.getElementById('distanciaRecorrida')?.addEventListener('input', (e) => {
   rutas[rutaActivaIdx].progresoPct = Number(e.target.value);
   recalcularTodasLasRutas();
@@ -1040,7 +1085,6 @@ document.getElementById('simRecursos')?.addEventListener('input', (e) => {
   recalcularTodasLasRutas();
 });
 
-// Controles globales compartidos
 document.getElementById('vehiculoSelect')?.addEventListener('change', recalcularTodasLasRutas);
 document.getElementById('climaSelect')?.addEventListener('change', recalcularTodasLasRutas);
 ['simPolvo', 'simTerreno', 'simComms'].forEach((id) => {
@@ -1063,7 +1107,6 @@ window.addEventListener('DOMContentLoaded', () => {
 
 document.getElementById('btnRestaurarNASA')?.addEventListener('click', aplicarConstantesPorDefectoNASA);
 
-// Borrar únicamente la ruta seleccionada actualmente
 document.getElementById('btnBorrarRutaActual')?.addEventListener('click', () => {
   const r = rutas[rutaActivaIdx];
   r.marcadoresAB.forEach((m) => map.removeLayer(m));
@@ -1083,7 +1126,7 @@ document.getElementById('btnBorrarRutaActual')?.addEventListener('click', () => 
   actualizarEstado(`${r.nombre} borrada — Haz clic en el mapa para nuevo Origen (A)`);
 });
 
-// Modo colocar refugios azules
+// Modo colocar refugios
 document.getElementById('btnPonerRefugios')?.addEventListener('click', (e) => {
   e.preventDefault();
   modoColocarRefugios = !modoColocarRefugios;
@@ -1098,16 +1141,31 @@ document.getElementById('btnPonerRefugios')?.addEventListener('click', (e) => {
     mapa.style.cursor = 'crosshair';
     boton.textContent = '✅ Salir del modo refugios';
     boton.classList.add('activo');
-    actualizarEstado('Modo Refugios: haz clic en el mapa para añadir refugios azules');
+    actualizarEstado('Modo Refugios: haz clic en el mapa para colocar hábitats');
   } else {
     mapa.style.cursor = '';
-    boton.textContent = '📍 Colocar puntos de refugios azules';
+    boton.textContent = '🏠 Colocar Refugios en el Mapa';
     boton.classList.remove('activo');
     actualizarEstado('Modo Ruta activo');
   }
 });
 
-// Modos del Editor: Línea Roja de Barranco y Círculo de Tormenta
+// Botón al lado de Línea Barranco para ocultar/mostrar las líneas rojas sin desactivarlas
+document.getElementById('btnToggleBarrancos')?.addEventListener('click', () => {
+  barrancosVisibles = !barrancosVisibles;
+  const btn = document.getElementById('btnToggleBarrancos');
+  if (btn) {
+    btn.textContent = barrancosVisibles ? '👁️ Ocultar Líneas' : '🙈 Mostrar Líneas';
+    btn.style.background = barrancosVisibles ? '#334155' : '#0f766e';
+  }
+  actualizarVistaYCodigoPeligros();
+  actualizarEstado(
+    barrancosVisibles
+      ? 'Líneas rojas de barrancos visibles en pantalla'
+      : 'Líneas rojas ocultas visualmente (siguen activas para rodeos)'
+  );
+});
+
 function actualizarBotonesEditorUI() {
   const btnB = document.getElementById('btnModoEditor');
   const btnT = document.getElementById('btnModoTormenta');
@@ -1186,7 +1244,7 @@ document.getElementById('btnBorrarEditor')?.addEventListener('click', () => {
 });
 
 // =========================================================================
-// 11. SIMULADOR GPS ANIMADO (AVANZA EL % DE LAS RUTAS ACTIVAS)
+// 11. SIMULADOR GPS ANIMADO
 // =========================================================================
 let intervaloGPS = null;
 let lineasTriangulacion = [];
@@ -1230,7 +1288,6 @@ document.getElementById('btnSimularGPS')?.addEventListener('click', () => {
     return;
   }
 
-  // Si la ruta activa ya estaba al 100%, reiniciarla al 0% para ver el recorrido completo
   rutasConCamino.forEach((r) => {
     if (r.progresoPct >= 100) r.progresoPct = 0;
   });
@@ -1275,7 +1332,6 @@ document.getElementById('btnSimularGPS')?.addEventListener('click', () => {
   }, 140);
 });
 
-// Botón Reiniciar Todas las Rutas
 document.getElementById('btnLimpiar')?.addEventListener('click', () => {
   if (intervaloGPS) {
     clearInterval(intervaloGPS);
@@ -1437,4 +1493,4 @@ document.getElementById('btnRefrescarNasaLive')?.addEventListener('click', () =>
   descargarTelemetriaRealNASA();
 });
 
-console.log('MarsWalk SafeNav v4 Multi-Ruta cargado correctamente.');
+console.log('MarsWalk SafeNav v5 con Iconos Astronauta/Refugio y Toggle Barrancos cargado.');

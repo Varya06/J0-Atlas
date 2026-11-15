@@ -1138,3 +1138,16 @@ document.getElementById('btnSiguientePaqueteNasa')?.addEventListener('click', ()
 document.getElementById('btnRefrescarNasaLive')?.addEventListener('click', () => {
   descargarTelemetriaRealNASA();
 });
+
+// =========================================================================
+// CONTROL MANUAL DE LA DISTANCIA RECORRIDA POR EL ASTRONAUTA
+// =========================================================================
+
+const controlDistancia = document.getElementById('distanciaRecorrida');
+const textoDistancia = document.getElementById('valDistancia');
+
+controlDistancia.addEventListener('input', () => {
+  const distancia = Number(controlDistancia.value);
+
+  textoDistancia.textContent = distancia + ' km';
+});

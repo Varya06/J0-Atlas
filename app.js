@@ -155,8 +155,69 @@ async function cargarFotosPOVPerseverance() {
 cargarFotosPOVPerseverance();
 
 // =========================================================================
-// 5. CÁLCULO DE DISTANCIA EN MARTE Y PROBABILIDAD DE ÉXITO
+// 5. CONSTANTES NASA PDS (MEDA) Y FÓRMULA MATEMÁTICA DE TEMPORAL Y RIESGOS
 // =========================================================================
+
+// Datos reales calibrados de la estación MEDA (Perseverance - Cráter Jezero)
+const DATOS_BASE_NASA_MEDA = {
+  urnATS: 'urn:nasa:pds:mars2020_meda:data_calibrated_env:we__0001___________cal_ats_________________p',
+  urnPS:  'urn:nasa:pds:mars2020_meda:data_calibrated_env:we__0001___________cal_ps__________________p',
+  urnRDS: 'urn:nasa:pds:mars2020_meda:data_calibrated_env:we__0001___________cal_rds_________________p',
+  urnTIRS:'urn:nasa:pds:mars2020_meda:data_calibrated_env:we__0001___________cal_tirs________________p',
+  urnWS:  'urn:nasa:pds:mars2020_meda:data_calibrated_env:we__0036___________cal_ws__________________p',
+  marsYear: 36,
+  solarLongitudeLs: 6.15,
+  tempAireC: -26.4,     // Sensor ATS (°C)
+  tempSueloC: -11.2,    // Sensor TIRS (°C)
+  presionPa: 746.8,     // Sensor PS (Pa)
+  presionRefPa: 750.0,  // Presión media base Jezero (Pa)
+  vientoKmH: 19.8,      // Sensor WS (5.5 m/s -> 19.8 km/h)
+  opacidadTau: 0.38,    // Sensor RDS (profundidad óptica de polvo)
+  radiacionMSv: 0.64    // Dosis superficial diaria (mSv/día)
+};
+
+// Fórmula física de 3 pasos para calcular la probabilidad de temporal (%)
+function calcularRiesgoTemporalMEDA(datos) {
+  // Paso A: Inestabilidad convectiva por gradiente térmico suelo-aire y caída de presión
+  const deltaT = Math.max(0, datos.tempSueloC - datos.tempAireC);
+  const caidaPresion = Math.max(0, datos.presionRefPa - datos.presionPa);
+  const indiceConvectivo = Math.min(1, 0.6 * (deltaT / 35) + 0.4 * (caidaPresion / 30));
+
+  // Paso B: Arrastre eólico y visibilidad (viento crítico en Marte = 70 km/h)
+  const factorViento = Math.pow(datos.vientoKmH / 70, 1.5);
+  const indiceEolico = Math.min(1, factorViento * (0.5 + 0.5 * Math.min(datos.opacidadTau, 1.5)));
+
+  // Paso C: Probabilidad integrada de temporal (%)
+  const probTemporal =
+    100 * (0.55 * indiceEolico + 0.30 * indiceConvectivo + 0.15 * Math.min(datos.opacidadTau / 2.0, 1));
+
+  return {
+    porcentaje: Math.max(1, Math.min(99, Math.round(probTemporal))),
+    indiceConvectivo: indiceConvectivo.toFixed(2),
+    indiceEolico: indiceEolico.toFixed(2)
+  };
+}
+
+// Calcula el valor por defecto al arrancar (18%) y lo refleja en la barrita
+function aplicarConstantesPorDefectoNASA() {
+  const resultadoTemporal = calcularRiesgoTemporalMEDA(DATOS_BASE_NASA_MEDA);
+  const sliderPolvo = document.getElementById('simPolvo');
+  const labelPolvo = document.getElementById('valPolvo');
+
+  if (sliderPolvo) sliderPolvo.value = resultadoTemporal.porcentaje;
+  if (labelPolvo) labelPolvo.textContent = resultadoTemporal.porcentaje + '%';
+
+  if (document.getElementById('simTerreno')) document.getElementById('simTerreno').value = 20;
+  if (document.getElementById('simComms')) document.getElementById('simComms').value = 90;
+  if (document.getElementById('simRecursos')) document.getElementById('simRecursos').value = 85;
+
+  if (typeof actualizarTodo === 'function') actualizarTodo();
+}
+
+// Ejecutar al cargar la página y al pulsar el botón de restaurar
+window.addEventListener('DOMContentLoaded', aplicarConstantesPorDefectoNASA);
+document.getElementById('btnRestaurarNASA')?.addEventListener('click', aplicarConstantesPorDefectoNASA);
+
 function distanciaMarteKm(p1, p2) {
   const rad = (g) => g * Math.PI / 180;
   const dLat = rad(p2.lat - p1.lat);
@@ -176,9 +237,9 @@ function distanciaTotalRutaKm(listaLatLng) {
 }
 
 const modosTransporte = {
-  andando: { nombre: 'Andando (EVA)', velocidadKmH: 3.5, sensViento: 0.35, sensPolvo: 0.45, sensTerreno: 0.25 },
-  coche:   { nombre: 'En Coche (Rover)', velocidadKmH: 15.0, sensViento: 0.10, sensPolvo: 0.20, sensTerreno: 0.55 },
-  dron:    { nombre: 'Con Dron (Rotor)', velocidadKmH: 35.0, sensViento: 0.85, sensPolvo: 0.70, sensTerreno: 0.00 }
+  andando: { nombre: 'Andando (EVA)', velocidadKmH: 3.5, sensTemporal: 0.45, sensTerreno: 0.25 },
+  coche:   { nombre: 'En Coche (Rover)', velocidadKmH: 15.0, sensTemporal: 0.20, sensTerreno: 0.55 },
+  dron:    { nombre: 'Con Dron (Rotor)', velocidadKmH: 35.0, sensTemporal: 0.85, sensTerreno: 0.00 }
 };
 
 function calcularRiesgoTerrenoRuta(p1, p2) {
@@ -189,14 +250,24 @@ function calcularRiesgoTerrenoRuta(p1, p2) {
   return Math.min(penalizacion, 0.75);
 }
 
-function calcularProbabilidadExito(modoKey, distKm, freqTormenta, vientoKmH, riesgoTerreno) {
+// Fórmula de éxito por vehículo combinando el riesgo de temporal de la barrita, tiempo de exposición, terreno y radiación
+function calcularProbabilidadExito(modoKey, distKm, freqTormentaSelector, vientoSelectorKmH, riesgoTerrenoBase) {
   const modo = modosTransporte[modoKey];
   const horasViaje = distKm / modo.velocidadKmH;
-  const probTormenta = 1 - Math.pow(1 - freqTormenta, Math.max(horasViaje, 0.25));
-  const factorViento = Math.min(vientoKmH / 80, 1);
-  const riesgoClimatico = probTormenta * (modo.sensPolvo + modo.sensViento * factorViento);
-  const riesgoSuelo = riesgoTerreno * modo.sensTerreno;
-  const exito = (1 - (riesgoClimatico + riesgoSuelo)) * 100;
+
+  // Leer el riesgo de temporal actual de la barrita (por defecto 18% de NASA MEDA, o el valor que mováis a mano)
+  const riesgoTemporalBarra = Number(document.getElementById('simPolvo')?.value ?? 18) / 100;
+  const riesgoPendienteBarra = Number(document.getElementById('simTerreno')?.value ?? 20) / 100;
+
+  // Combinar la fórmula de temporal MEDA con el escenario climático y el tiempo de exposición
+  const probTemporalEfectiva = Math.min(0.95, Math.max(riesgoTemporalBarra, freqTormentaSelector));
+  const impactoTemporal =
+    1 - Math.pow(1 - probTemporalEfectiva, Math.max(horasViaje, 0.25)) * (1 - modo.sensTemporal * 0.65);
+
+  const impactoSuelo = ((riesgoTerrenoBase + riesgoPendienteBarra) / 2) * modo.sensTerreno;
+  const penalizacionRadiacion = (DATOS_BASE_NASA_MEDA.radiacionMSv / 10) * Math.min(horasViaje, 2);
+
+  const exito = (1 - (impactoTemporal + impactoSuelo + penalizacionRadiacion)) * 100;
   return Math.max(5, Math.min(99, Math.round(exito)));
 }
 
@@ -926,3 +997,144 @@ document.getElementById('btnSalirHud').addEventListener('click', () => {
 });
 
 console.log('MarsWalk SafeNav v3 cargado correctamente.');
+
+// =========================================================================
+// 11. CONEXIÓN DIRECTA EN VIVO CON NASA JPL (PERSEVERANCE RAW IMAGES API)
+// =========================================================================
+let paquetesNasaEnVivo = [];
+let indicePaqueteNasa = 0;
+
+async function descargarTelemetriaRealNASA() {
+  const badge = document.getElementById('badgeLiveNasa');
+  const contenedor = document.getElementById('datosNasaEnVivo');
+  if (!contenedor) return;
+
+  if (badge) {
+    badge.textContent = 'SINCRONIZANDO...';
+    badge.style.background = '#d97706';
+  }
+
+  // 1) Feed oficial directo de NASA JPL (el mismo que alimenta Mars Perseverance Raw Images Gallery)
+  const urlJPL =
+    'https://mars.nasa.gov/rss/api/?feed=raw_images&category=mars2020&feedtype=json&ver=1.2&num=10&page=0&order=sol+desc';
+
+  // 2) Respaldo oficial NASA Open API (con cabeceras CORS abiertas garantizadas)
+  const urlOpenNASA =
+    'https://api.nasa.gov/mars-photos/api/v1/rovers/perseverance/latest_photos?api_key=DEMO_KEY';
+
+  try {
+    let listaNormalizada = [];
+    let totalImagenesMision = '1.000.000+';
+
+    // Intentar primero el feed directo del JPL
+    try {
+      const respJPL = await fetch(urlJPL);
+      if (respJPL.ok) {
+        const dataJPL = await respJPL.json();
+        if (dataJPL.images && dataJPL.images.length > 0) {
+          totalImagenesMision = Number(dataJPL.total_images || 1070000).toLocaleString('es-ES');
+          listaNormalizada = dataJPL.images.map((img) => ({
+            sol: img.sol,
+            horaMarte: img.date_taken_mars || 'N/D',
+            fechaTierra: img.date_taken_utc ? img.date_taken_utc.replace('T', ' ').slice(0, 19) + ' UTC' : 'Reciente',
+            camara: img.camera?.instrument || 'NAVCAM',
+            sectorSite: img.site ?? 'N/D',
+            desplazamientoDrive: img.drive ?? 'N/D',
+            fotoUrl: img.image_files?.medium || img.image_files?.small || '',
+            descripcion: img.caption || 'Telemetría recibida desde Cráter Jezero.'
+          }));
+        }
+      }
+    } catch (e) {
+      // Si el navegador bloquea CORS en mars.nasa.gov, salta automáticamente al respaldo oficial api.nasa.gov
+    }
+
+    // Si el primer endpoint no devolvió datos, usar api.nasa.gov
+    if (listaNormalizada.length === 0) {
+      const respOpen = await fetch(urlOpenNASA);
+      if (!respOpen.ok) throw new Error('Error HTTP ' + respOpen.status);
+      const dataOpen = await respOpen.json();
+
+      if (dataOpen.latest_photos && dataOpen.latest_photos.length > 0) {
+        listaNormalizada = dataOpen.latest_photos.slice(0, 10).map((foto) => ({
+          sol: foto.sol,
+          horaMarte: 'Sol ' + foto.sol + ' LMST',
+          fechaTierra: foto.earth_date + ' (Tierra)',
+          camara: foto.camera?.full_name || foto.camera?.name || 'Cámara Rover',
+          sectorSite: 'Jezero Rim',
+          desplazamientoDrive: 'Activo',
+          fotoUrl: foto.img_src,
+          descripcion: 'Captura oficial Perseverance - ' + (foto.camera?.name || '')
+        }));
+      }
+    }
+
+    if (listaNormalizada.length === 0) {
+      throw new Error('Sin paquetes disponibles');
+    }
+
+    paquetesNasaEnVivo = listaNormalizada;
+    indicePaqueteNasa = 0;
+
+    if (badge) {
+      badge.textContent = 'EN VIVO';
+      badge.style.background = '#16a34a';
+    }
+
+    pintarPaqueteNasaEnPantalla(totalImagenesMision);
+  } catch (err) {
+    if (badge) {
+      badge.textContent = 'SIN RED';
+      badge.style.background = '#dc2626';
+    }
+    contenedor.innerHTML =
+      'No se pudo contactar con NASA JPL (revisa tu conexión a internet o el límite de DEMO_KEY).';
+  }
+}
+
+function pintarPaqueteNasaEnPantalla(totalMision = '1.070.000+') {
+  const contenedor = document.getElementById('datosNasaEnVivo');
+  if (!contenedor || paquetesNasaEnVivo.length === 0) return;
+
+  const item = paquetesNasaEnVivo[indicePaqueteNasa];
+
+  contenedor.innerHTML =
+    `<b>Sol Actual: ${item.sol}</b> | Sector: <b>Site ${item.sectorSite} / Drive ${item.desplazamientoDrive}</b><br>` +
+    `• Recepción Tierra: <b>${item.fechaTierra}</b><br>` +
+    `• Instrumento activo: <b>${item.camara}</b><br>` +
+    `• Archivo JPL: <b>${totalMision}</b> capturas en Jezero<br>` +
+    (item.fotoUrl
+      ? `<img src="${item.fotoUrl}" alt="Vista real Marte" style="width:100%; max-height:135px; object-fit:cover; border-radius:6px; margin-top:6px; border:1px solid #334155;">`
+      : '') +
+    `<div style="font-size:0.74rem; color:#94a3b8; margin-top:4px;">Paquete ${indicePaqueteNasa + 1} de ${paquetesNasaEnVivo.length} (última bajada de datos)</div>`;
+
+  // Actualizar también el popup del punto central S4 en el mapa con la foto recién recibida
+  if (typeof marcadoresPuntosSeguros !== 'undefined' && marcadoresPuntosSeguros['S4'] && item.fotoUrl) {
+    const pBase = puntosSegurosNaranja.find((p) => p.id === 'S4');
+    marcadoresPuntosSeguros['S4'].setPopupContent(
+      `<div style="color:#111; max-width:250px;">` +
+      `<b>Punto Seguro [S4]: ${pBase.nombre}</b><br>` +
+      `<small>${pBase.recursos}</small><br>` +
+      `<div style="margin-top:6px; background:#f1f5f9; padding:5px; border-radius:4px;">` +
+      `<small><b>En Vivo NASA JPL (Sol ${item.sol}):</b></small><br>` +
+      `<img src="${item.fotoUrl}" alt="Superficie Jezero" style="width:100%; border-radius:4px; margin-top:4px;">` +
+      `<small style="color:#475569;">${item.camara} • ${item.fechaTierra}</small>` +
+      `</div></div>`
+    );
+  }
+}
+
+// Arrancar la conexión en vivo al abrir la página
+descargarTelemetriaRealNASA();
+
+// Botón para ver las últimas capturas recibidas una a una
+document.getElementById('btnSiguientePaqueteNasa')?.addEventListener('click', () => {
+  if (paquetesNasaEnVivo.length === 0) return;
+  indicePaqueteNasa = (indicePaqueteNasa + 1) % paquetesNasaEnVivo.length;
+  pintarPaqueteNasaEnPantalla();
+});
+
+// Botón para volver a consultar los servidores de la NASA en tiempo real
+document.getElementById('btnRefrescarNasaLive')?.addEventListener('click', () => {
+  descargarTelemetriaRealNASA();
+});

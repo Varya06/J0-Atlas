@@ -224,10 +224,19 @@
     </div>
 
     <div class="panel" id="panelSensores">
-      <b>Simulador Sensores Locales (Sin Satélite):</b><br><br>
+      <b>Simulador Sensores Locales (Sin Satélite):</b>
 
-      <label for="simPolvo">Polvo / Predicción Tormenta: <span id="valPolvo">15%</span></label>
-      <input type="range" id="simPolvo" min="0" max="100" value="15">
+      <!-- Constantes reales extraídas de NASA PDS (Perseverance MEDA) -->
+      <div id="infoConstantesNASA" style="margin:6px 0 8px 0; padding:7px; background:#0f172a; border:1px solid #334155; border-radius:6px; font-size:0.75rem; color:#cbd5e1;">
+        <b style="color:#38bdf8;">Línea Base NASA PDS (Mars 2020 MEDA):</b><br>
+        • Aire (ATS): <b>-26.4 °C</b> | Suelo (TIRS): <b>-11.2 °C</b><br>
+        • Presión (PS): <b>746.8 Pa</b> | Viento (WS): <b>19.8 km/h</b><br>
+        • Polvo (RDS): <b>τ 0.38</b> | Año Marciano <b>36</b> (Ls 6.15°)<br>
+        <span style="color:#64748b; font-size:0.68rem;">URN: urn:nasa:pds:mars2020_meda:data_calibrated_env</span>
+      </div>
+
+      <label for="simPolvo">Riesgo Temporal / Polvo (Fórmula MEDA): <span id="valPolvo">18%</span></label>
+      <input type="range" id="simPolvo" min="0" max="100" value="18">
 
       <label for="simTerreno">Riesgo Terreno / Pendiente: <span id="valTerreno">20%</span></label>
       <input type="range" id="simTerreno" min="0" max="100" value="20">
@@ -235,8 +244,12 @@
       <label for="simComms">Señal Comms (Enlace Radio): <span id="valComms">90%</span></label>
       <input type="range" id="simComms" min="0" max="100" value="90">
 
-      <label for="simRecursos">Reserva Recursos (O2 / Batería): <span id="valRecursos">85%</span></label>
+      <label for="simRecursos">Reserva Batería / Energía: <span id="valRecursos">85%</span></label>
       <input type="range" id="simRecursos" min="0" max="100" value="85">
+
+      <button type="button" id="btnRestaurarNASA" style="background:#334155; font-size:0.76rem; padding:6px; margin-top:4px;">
+        ↺ Restaurar valores base NASA MEDA
+      </button>
     </div>
 
     <div class="panel" style="border-color:#ef4444;">
